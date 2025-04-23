@@ -5,6 +5,7 @@ Our AI-Powered-Automatic-Advertisement-Generation-System offers a revolutionary 
 
 ## Tech Stack and updates
 Added prototype GUI (Python with PyQt5 library)
+Flask Server and MongoDB for database.
 
 ## Project members:
 Daniel Ayash and Maor Siboni.
