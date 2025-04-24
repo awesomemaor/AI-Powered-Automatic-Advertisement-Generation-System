@@ -5,7 +5,7 @@ Our AI-Powered-Automatic-Advertisement-Generation-System offers a revolutionary 
 
 ## Tech Stack and updates (to be)
 **Frontend:** Python  with PyQt5 library and framework.<br /> 
-**Backend:** FastAPI as server.<br />  
+**Backend:** FastAPI as server.
 **Database:** MongoDB via pymongo.<br /> 
 Added prototype GUI and architecture.
 
