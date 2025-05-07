@@ -17,6 +17,22 @@ QPushButton {
     font-size: 16px;
 }
 
+QPushButton#backButton {
+    background-color: #e9796c;
+    color: white;
+    border-radius: 10px;
+    padding: 8px;
+    font-size: 14px;
+}
+
+QPushButton#backButton:hover {
+    background-color: #c84a3c;
+}
+
+QPushButton#backButton:pressed {
+    background-color: #e9796c;
+}
+
 QPushButton:hover {
     background-color: #2980b9;
 }
