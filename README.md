@@ -9,7 +9,7 @@ Our AI-Powered-Automatic-Advertisement-Generation-System offers a revolutionary 
 **Database:** MongoDB via pymongo.<br /> 
 Added prototype GUI and architecture.
 
-## Project members:
+## Project R&D members:
 Daniel Ayash and Maor Siboni.
 
 ### Work in progress...
