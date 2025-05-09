@@ -1,6 +1,7 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QMessageBox
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
+from Backend.logic.login_logic import login_user
 
 class LoginScreen(QWidget):
     def __init__(self, parent):
@@ -51,9 +52,27 @@ class LoginScreen(QWidget):
         # Login button
         self.log_button = QPushButton("Login")
         self.log_button.setFont(QFont("Segoe UI", 16))
+        self.log_button.clicked.connect(self.try_login)
         main_layout.addWidget(self.log_button)
 
         self.setLayout(main_layout)
     
     def go_back(self):
         self.parent.setCurrentWidget(self.parent.welcome_screen)
+
+    # Add this method to LoginScreen:
+    def try_login(self):
+        username = self.username_input.text()
+        password = self.password_input.text()
+
+        result = login_user(username, password)
+        
+        msg = QMessageBox()
+        if result["success"]:
+            msg.setText(result["message"])
+            msg.setIcon(QMessageBox.Information)
+            # TODO: Navigate to next screen here
+        else:
+            msg.setText("Login failed: " + result["message"])
+            msg.setIcon(QMessageBox.Critical)
+        msg.exec_()
