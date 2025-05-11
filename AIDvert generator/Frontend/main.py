@@ -7,14 +7,14 @@ from guis.login_screen import LoginScreen
 from PyQt5.QtWidgets import QApplication, QStackedWidget
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from Backend.api import app as auth_app
+#from Backend.api import app as auth_app
+from Backend.auth_login import router as login_router
 from Backend.db_init import customers_collection
 
-
-# ✅ FastAPI app instance (required for Uvicorn)
+# FastAPI app instance (required for Uvicorn)
 app = FastAPI()
 
-app.mount("/", auth_app)
+app.include_router(login_router)
 
 # Start FastAPI server in a separate thread
 def start_fastapi():
