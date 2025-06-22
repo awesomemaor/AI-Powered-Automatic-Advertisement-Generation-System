@@ -5,6 +5,7 @@ import uvicorn
 from guis.welcome_screen import WelcomeScreen 
 from guis.login_screen import LoginScreen
 from PyQt5.QtWidgets import QApplication, QStackedWidget
+from PyQt5.QtGui import QIcon
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 #from Backend.api import app as auth_app
@@ -48,6 +49,10 @@ if __name__ == "__main__":
             qt_app.setStyleSheet(file.read())
 
     window = MainApp()
+    window.setWindowTitle("InstaAD - Advertisement Generator")
+    window.setGeometry(400, 400, 600, 350)  # Set the window size and position
+    icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "images/InstaADlogo.png"))
+    window.setWindowIcon(QIcon(icon_path))
     window.show()
 
     sys.exit(qt_app.exec_())

@@ -10,7 +10,7 @@ class LoginScreen(QWidget):
         self.initUI()
     
     def initUI(self):
-        self.setWindowTitle("AIDvert - Login")
+        self.setWindowTitle("InstaAD - Login")
         self.setGeometry(400, 400, 600, 400)
 
         main_layout = QVBoxLayout()  # Main layout for the widget
@@ -27,27 +27,37 @@ class LoginScreen(QWidget):
         main_layout.addLayout(top_layout)  
 
         # Title
-        self.title = QLabel("Login to AIDvert")
+        self.title = QLabel("Login to InstaAD")
         self.title.setFont(QFont("Segoe UI", 28, QFont.Bold))
         self.title.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(self.title)
 
-        # Username input
-        self.username_input = QLineEdit()  
-        self.username_input.setPlaceholderText("Enter username...")  
-        self.username_input.setFont(QFont("Segoe UI", 12))  
-        self.username_input.setFixedWidth(300)  
-        self.username_input.setAlignment(Qt.AlignCenter) 
-        main_layout.addWidget(self.username_input, alignment=Qt.AlignCenter)
+        # Grouping inputs
+        input_group = QWidget()
+        input_layout = QVBoxLayout()
+        input_layout.setSpacing(10)
+        input_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Password input
+        self.username_input = QLineEdit()
+        self.username_input.setPlaceholderText("Enter username...")
+        self.username_input.setFont(QFont("Segoe UI", 14))
+        self.username_input.setFixedWidth(300)
+        self.username_input.setAlignment(Qt.AlignCenter)
+
         self.password_input = QLineEdit()
         self.password_input.setEchoMode(QLineEdit.Password)
-        self.password_input.setPlaceholderText("Enter password...")  
-        self.password_input.setFont(QFont("Segoe UI", 12))  
-        self.password_input.setFixedWidth(300)  
-        self.password_input.setAlignment(Qt.AlignCenter) 
-        main_layout.addWidget(self.password_input, alignment=Qt.AlignCenter)
+        self.password_input.setPlaceholderText("Enter password...")
+        self.password_input.setFont(QFont("Segoe UI", 14))
+        self.password_input.setFixedWidth(300)
+        self.password_input.setAlignment(Qt.AlignCenter)
+
+        input_layout.addWidget(self.username_input, alignment=Qt.AlignCenter)
+        input_layout.addWidget(self.password_input, alignment=Qt.AlignCenter)
+
+        input_group.setLayout(input_layout)
+
+        # Add to the main layout
+        main_layout.addWidget(input_group, alignment=Qt.AlignCenter)
 
         # Login button
         self.log_button = QPushButton("Login")

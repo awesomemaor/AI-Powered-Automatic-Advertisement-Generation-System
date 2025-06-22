@@ -3,34 +3,22 @@ QWidget {
     font-family: "Segoe UI", Arial, sans-serif;
 }
 
+/* TITLE LABELS */
 QLabel {
     color: #2c3e50;
     font-size: 44px;
     margin-bottom: 30px;
+    font-weight: bold;
 }
 
+/* BUTTON STYLING */
 QPushButton {
     background-color: #3498db;
     color: white;
-    border-radius: 10px;
-    padding: 12px;
+    border-radius: 12px;
+    padding: 14px;
     font-size: 16px;
-}
-
-QPushButton#backButton {
-    background-color: #e9796c;
-    color: white;
-    border-radius: 10px;
-    padding: 8px;
-    font-size: 14px;
-}
-
-QPushButton#backButton:hover {
-    background-color: #c84a3c;
-}
-
-QPushButton#backButton:pressed {
-    background-color: #e9796c;
+    border: none;
 }
 
 QPushButton:hover {
@@ -39,4 +27,37 @@ QPushButton:hover {
 
 QPushButton:pressed {
     background-color: #2471a3;
+}
+
+/* BACK BUTTON SPECIFIC */
+QPushButton#backButton {
+    background-color: #e9796c;
+    color: white;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 14px;
+}
+
+QPushButton#backButton:hover {
+    background-color: #c84a3c;
+}
+
+/* INPUT FIELDS - MODERN STYLE */
+QLineEdit {
+    background-color: #ffffff;
+    border: 2px solid #dce1e7;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #2c3e50;
+}
+
+QLineEdit:focus {
+    border: 2px solid #3498db;
+    outline: none;
+}
+
+/* Optional: message boxes (QMessageBox) */
+QMessageBox QLabel {
+    font-size: 14px;
 }
