@@ -76,13 +76,19 @@ class LoginScreen(QWidget):
         password = self.password_input.text()
 
         result = login_user(username, password)
-        
+
         msg = QMessageBox()
         if result["success"]:
             msg.setText(result["message"])
             msg.setIcon(QMessageBox.Information)
-            # TODO: Navigate to next screen here
+            msg.exec_()
+
+            # יצירת מסך בית עם שם המשתמש
+            from guis.userHome_screen import UserHomeScreen
+            user_home = UserHomeScreen(self.parent, username)
+            self.parent.addWidget(user_home)
+            self.parent.setCurrentWidget(user_home)
         else:
             msg.setText("Login failed: " + result["message"])
             msg.setIcon(QMessageBox.Critical)
-        msg.exec_()
+            msg.exec_()
