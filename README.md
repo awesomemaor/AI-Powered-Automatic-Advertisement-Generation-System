@@ -1,15 +1,17 @@
-# AI-Powered-Automatic-Advertisement-Generation-System
-Creating effective advertisements is time-consuming and requires creativity, marketing expertise, and design skills. Many businesses struggle to produce high-quality ads efficiently, leading to increased costs and inconsistent results. 
-# Detailed explanation
-Our AI-Powered-Automatic-Advertisement-Generation-System offers a revolutionary solution to streamline the ad creation process. By leveraging advanced machine learning algorithms and natural language processing (NLP), the system can generate tailored advertisements quickly, cost-effectively, and consistently. This not only alleviates the burden on marketing teams but also ensures high-quality, personalized content for various target audiences.
+# InstaAD - an AI-Powered-Automatic-Advertisement-Generation-System
+# Problem Statement
+Creating effective advertisements is often time-consuming and requires a combination of creativity, marketing knowledge, and design expertise. Many businesses struggle to produce high-quality ads quickly and consistently — leading to high costs and uneven results. 
+# Our Solution
+Our system leverages advanced AI technologies — including machine learning and natural language processing (NLP) — to automatically generate personalized, high-quality video advertisements in a fast and cost-effective manner.
+It streamlines the entire process, reduces manual effort, and ensures that businesses can quickly create content tailored to different audiences.
 
 ## Tech Stack and updates (to be)
-**Frontend:** Python  with PyQt5 library and framework.<br /> 
-**Backend:** FastAPI as server.<br />
-**Database:** MongoDB via pymongo.<br /> 
-Added prototype GUI and architecture.
+**Frontend:** Python using the PyQt5 framework (desktop GUI).<br /> 
+**Backend:** FastAPI (RESTful server).<br />
+**Database:** MongoDB with PyMongo.<br /> 
+**Other Feature:** Prototype GUI and modular architecture.<br />
 
 ## Project R&D members:
 Daniel Ayash and Maor Siboni.
 
-### Work in progress...
+### Work in progress – we’re actively developing and improving the system...
