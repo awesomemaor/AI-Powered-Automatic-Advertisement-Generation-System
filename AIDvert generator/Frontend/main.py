@@ -48,6 +48,9 @@ if __name__ == "__main__":
             qt_app.setStyleSheet(file.read())
 
     window = MainApp()
+    window.setGeometry(400, 400, 800, 400)
+    window.setWindowTitle("InstaAD")
+    #windows.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "assets", "icon.png")))  # Ensure the icon path is correct
     window.show()
 
     sys.exit(qt_app.exec_())

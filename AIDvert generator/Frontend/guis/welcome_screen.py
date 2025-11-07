@@ -9,12 +9,12 @@ class WelcomeScreen(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("AIDvert - Welcome")
+        self.setWindowTitle("InstaAD - Welcome")
         self.setGeometry(400, 400, 600, 400)
 
         layout = QVBoxLayout()
 
-        self.title = QLabel("Welcome to AIDvert")
+        self.title = QLabel("Welcome to InstaAD")
         self.title.setFont(QFont("Segoe UI", 28, QFont.Bold))
         self.title.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.title)

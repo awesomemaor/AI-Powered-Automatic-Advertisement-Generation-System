@@ -10,7 +10,7 @@ class LoginScreen(QWidget):
         self.initUI()
     
     def initUI(self):
-        self.setWindowTitle("AIDvert - Login")
+        self.setWindowTitle("InstaAD - Login")
         self.setGeometry(400, 400, 600, 400)
 
         main_layout = QVBoxLayout()  # Main layout for the widget
@@ -27,7 +27,7 @@ class LoginScreen(QWidget):
         main_layout.addLayout(top_layout)  
 
         # Title
-        self.title = QLabel("Login to AIDvert")
+        self.title = QLabel("Login to InstaAD")
         self.title.setFont(QFont("Segoe UI", 28, QFont.Bold))
         self.title.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(self.title)
