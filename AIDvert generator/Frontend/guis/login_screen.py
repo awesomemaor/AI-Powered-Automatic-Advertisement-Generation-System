@@ -32,22 +32,32 @@ class LoginScreen(QWidget):
         self.title.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(self.title)
 
-        # Username input
-        self.username_input = QLineEdit()  
-        self.username_input.setPlaceholderText("Enter username...")  
-        self.username_input.setFont(QFont("Segoe UI", 12))  
-        self.username_input.setFixedWidth(300)  
-        self.username_input.setAlignment(Qt.AlignCenter) 
-        main_layout.addWidget(self.username_input, alignment=Qt.AlignCenter)
+        # Grouping inputs
+        input_group = QWidget()
+        input_layout = QVBoxLayout()
+        input_layout.setSpacing(10)
+        input_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Password input
+        self.username_input = QLineEdit()
+        self.username_input.setPlaceholderText("Enter username...")
+        self.username_input.setFont(QFont("Segoe UI", 14))
+        self.username_input.setFixedWidth(300)
+        self.username_input.setAlignment(Qt.AlignCenter)
+
         self.password_input = QLineEdit()
         self.password_input.setEchoMode(QLineEdit.Password)
-        self.password_input.setPlaceholderText("Enter password...")  
-        self.password_input.setFont(QFont("Segoe UI", 12))  
-        self.password_input.setFixedWidth(300)  
-        self.password_input.setAlignment(Qt.AlignCenter) 
-        main_layout.addWidget(self.password_input, alignment=Qt.AlignCenter)
+        self.password_input.setPlaceholderText("Enter password...")
+        self.password_input.setFont(QFont("Segoe UI", 14))
+        self.password_input.setFixedWidth(300)
+        self.password_input.setAlignment(Qt.AlignCenter)
+
+        input_layout.addWidget(self.username_input, alignment=Qt.AlignCenter)
+        input_layout.addWidget(self.password_input, alignment=Qt.AlignCenter)
+
+        input_group.setLayout(input_layout)
+
+        # Add to the main layout
+        main_layout.addWidget(input_group, alignment=Qt.AlignCenter)
 
         # Login button
         self.log_button = QPushButton("Login")
@@ -66,13 +76,19 @@ class LoginScreen(QWidget):
         password = self.password_input.text()
 
         result = login_user(username, password)
-        
+
         msg = QMessageBox()
         if result["success"]:
             msg.setText(result["message"])
             msg.setIcon(QMessageBox.Information)
-            # TODO: Navigate to next screen here
+            msg.exec_()
+
+            # יצירת מסך בית עם שם המשתמש
+            from guis.userHome_screen import UserHomeScreen
+            user_home = UserHomeScreen(self.parent, username)
+            self.parent.addWidget(user_home)
+            self.parent.setCurrentWidget(user_home)
         else:
             msg.setText("Login failed: " + result["message"])
             msg.setIcon(QMessageBox.Critical)
-        msg.exec_()
+            msg.exec_()

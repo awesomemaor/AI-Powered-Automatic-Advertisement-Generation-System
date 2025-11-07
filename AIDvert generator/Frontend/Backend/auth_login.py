@@ -18,7 +18,7 @@ def login(req: LoginRequest):
     if user:
         if user["password"] == req.password:
             print("Password matched")
-            return {"success": True, "message": "Login successful!"}
+            return {"success": True, "message": "Login successful!", "username": req.username}
         else:
             print("Incorrect password")
             raise HTTPException(status_code=401, detail="Incorrect password")
