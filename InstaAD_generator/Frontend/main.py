@@ -4,6 +4,9 @@ import threading
 import uvicorn
 from guis.welcome_screen import WelcomeScreen 
 from guis.login_screen import LoginScreen
+from guis.register_screen import RegisterScreen
+from guis.userHome_screen import UserHomeScreen
+from guis.generate_screen import GenerateScreen
 from PyQt5.QtWidgets import QApplication, QStackedWidget
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -27,9 +30,16 @@ class MainApp(QStackedWidget):
 
         self.welcome_screen = WelcomeScreen(self)
         self.login_screen = LoginScreen(self)
+        self.register_screen = RegisterScreen(self) 
+        self.user_home_screen = UserHomeScreen(self, username="")  # username דיפולטיבי
+        self.generate_screen = GenerateScreen(self)
 
+        self.addWidget(self.user_home_screen)
+        self.addWidget(self.generate_screen)
         self.addWidget(self.welcome_screen)  # stacking it to index 0
         self.addWidget(self.login_screen)    # stacking it to index 1
+        self.addWidget(self.register_screen)
+    
 
         self.setCurrentWidget(self.welcome_screen)  # default screen
 
