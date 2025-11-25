@@ -2,6 +2,7 @@ import sys
 import os
 import threading
 import uvicorn
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from guis.welcome_screen import WelcomeScreen 
 from guis.login_screen import LoginScreen
 from guis.register_screen import RegisterScreen
@@ -11,8 +12,8 @@ from PyQt5.QtWidgets import QApplication, QStackedWidget
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 #from Backend.api import app as auth_app
-from Backend.auth_login import router as login_router
-from Backend.db_init import customers_collection
+from Backend.endpoints.auth_login import router as login_router
+from Backend.endpoints.db_init import customers_collection
 
 # FastAPI app instance (required for Uvicorn)
 app = FastAPI()
