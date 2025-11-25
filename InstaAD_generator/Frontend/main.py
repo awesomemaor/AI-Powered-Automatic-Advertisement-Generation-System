@@ -13,12 +13,14 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 #from Backend.api import app as auth_app
 from Backend.endpoints.auth_login import router as login_router
+from Backend.endpoints.auth_register import router as register_router
 from Backend.endpoints.db_init import customers_collection
 
 # FastAPI app instance (required for Uvicorn)
 app = FastAPI()
 
 app.include_router(login_router)
+app.include_router(register_router)
 
 # Start FastAPI server in a separate thread
 def start_fastapi():

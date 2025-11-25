@@ -1,4 +1,4 @@
-from Backend.logic.register_logic import RegisterLogic
+from Backend.logic.register_logic import register_user, validate_inputs
 from PyQt5.QtWidgets import (
     QWidget, QLabel, QLineEdit, QVBoxLayout, QPushButton, 
     QComboBox, QDateEdit, QGraphicsDropShadowEffect, QMessageBox
@@ -9,7 +9,6 @@ from PyQt5.QtCore import Qt, QDate
 class RegisterScreen(QWidget):
     def __init__(self, parent):
         super().__init__()
-        self.logic = RegisterLogic()
         self.parent = parent
         self.initUI()
 
@@ -180,16 +179,16 @@ class RegisterScreen(QWidget):
         username = self.username_input.text()
         password = self.password_input.text()
         birthdate = self.birthdate_input.date().toString("yyyy-MM-dd")
-        business_type = self.business_type_input.currentText()
+        business_type = self.type_input.currentText()
         business_field = self.field_input.text()
 
-        success, msg = self.logic.register_user(username, password, birthdate, business_type, business_field)
+        success, msg = register_user(username, password, birthdate, business_type, business_field)
 
         msg_box = QMessageBox()
         msg_box.setWindowTitle("Registration")
         if success:
             msg_box.setIcon(QMessageBox.Information)
-            msg_box.setText("Registration successful!")
+            msg_box.setText(msg)
             msg_box.exec_()
             self.parent.setCurrentWidget(self.parent.welcome_screen)
         else:
