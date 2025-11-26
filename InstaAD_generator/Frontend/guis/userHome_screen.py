@@ -1,8 +1,9 @@
 # screens/user_home_screen.py
 
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QGraphicsDropShadowEffect
+from PyQt5.QtWidgets import QWidget, QMessageBox ,QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QGraphicsDropShadowEffect
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import Qt
+from Backend.logic.login_logic import logout_user_request
 
 class UserHomeScreen(QWidget):
     def __init__(self, parent, username):
@@ -132,4 +133,15 @@ class UserHomeScreen(QWidget):
         print("Advertisement History clicked")
 
     def logout_clicked(self):
-        self.parent.setCurrentWidget(self.parent.welcome_screen)
+        result = logout_user_request(self.username)
+
+        if result["success"]:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setWindowTitle("Logout")
+            msg.setText("You have been logged out successfully!")
+            msg.setStandardButtons(QMessageBox.Ok)
+
+            msg.exec_()  
+
+            self.parent.setCurrentWidget(self.parent.welcome_screen)
