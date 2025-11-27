@@ -144,4 +144,7 @@ class UserHomeScreen(QWidget):
 
             msg.exec_()  
 
+            #self.parent.user_home_screen = None
+            #self.parent.current_user = None
+
             self.parent.setCurrentWidget(self.parent.welcome_screen)

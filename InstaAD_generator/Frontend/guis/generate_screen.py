@@ -4,9 +4,10 @@ from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import Qt
 
 class GenerateScreen(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, user_home_screen=None):
         super().__init__()
         self.parent = parent
+        self.user_home_screen = user_home_screen  # Reference to the login-created user_home
         self.initUI()
 
     def initUI(self):
@@ -49,7 +50,7 @@ class GenerateScreen(QWidget):
 
         # Back & Logout buttons
         back_btn = QPushButton("Back")
-        back_btn.clicked.connect(lambda: self.parent.setCurrentWidget(self.parent.user_home_screen))
+        back_btn.clicked.connect(lambda: self.parent.setCurrentWidget(self.user_home_screen or self.parent.user_home_screen))
         logout_btn = QPushButton("Logout")
         logout_btn.clicked.connect(lambda: self.parent.setCurrentWidget(self.parent.welcome_screen))
         for btn in [back_btn, logout_btn]:

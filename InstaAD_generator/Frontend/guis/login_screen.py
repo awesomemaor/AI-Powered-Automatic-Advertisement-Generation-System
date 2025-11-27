@@ -168,8 +168,13 @@ class LoginScreen(QWidget):
             # יצירת מסך בית עם שם המשתמש
             from guis.userHome_screen import UserHomeScreen
             user_home = UserHomeScreen(self.parent, username)
+            # Update generate_screen to use this user_home instance
+            self.parent.generate_screen.user_home_screen = user_home
+            #self.parent.user_home_screen = user_home
             self.parent.addWidget(user_home)
+      
             self.parent.setCurrentWidget(user_home)
+
         else:
             msg.setText("Login failed: " + result["message"])
             msg.setIcon(QMessageBox.Critical)
