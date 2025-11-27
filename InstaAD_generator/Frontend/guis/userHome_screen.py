@@ -122,8 +122,8 @@ class UserHomeScreen(QWidget):
         main_layout.addWidget(card_widget, alignment=Qt.AlignCenter)
         self.setLayout(main_layout)
 
-    # --- פונקציות חיבור --- #
     def start_new_ad(self):
+        self.parent.generate_screen.username = self.username
         self.parent.setCurrentWidget(self.parent.generate_screen)
 
     def generate_recommended(self):

@@ -2,11 +2,13 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QGraphicsDropShadowEffect
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import Qt
+from Backend.logic.login_logic import logout_user_request
 
 class GenerateScreen(QWidget):
-    def __init__(self, parent, user_home_screen=None):
+    def __init__(self, parent, username, user_home_screen=None):
         super().__init__()
         self.parent = parent
+        self.username = username
         self.user_home_screen = user_home_screen  # Reference to the login-created user_home
         self.initUI()
 
@@ -52,7 +54,7 @@ class GenerateScreen(QWidget):
         back_btn = QPushButton("Back")
         back_btn.clicked.connect(lambda: self.parent.setCurrentWidget(self.user_home_screen or self.parent.user_home_screen))
         logout_btn = QPushButton("Logout")
-        logout_btn.clicked.connect(lambda: self.parent.setCurrentWidget(self.parent.welcome_screen))
+        logout_btn.clicked.connect(self.on_logout)
         for btn in [back_btn, logout_btn]:
             btn.setFont(QFont("Segoe UI", 12, QFont.Bold))
             btn.setCursor(Qt.PointingHandCursor)
@@ -152,3 +154,7 @@ class GenerateScreen(QWidget):
         card_widget.setLayout(card_layout)
         main_layout.addWidget(card_widget, alignment=Qt.AlignCenter)
         self.setLayout(main_layout)
+    
+    def on_logout(self):
+        logout_user_request(self.username)
+        self.parent.setCurrentWidget(self.parent.welcome_screen)

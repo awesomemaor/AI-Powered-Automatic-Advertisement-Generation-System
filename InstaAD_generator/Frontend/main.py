@@ -35,7 +35,7 @@ class MainApp(QStackedWidget):
         self.login_screen = LoginScreen(self)
         self.register_screen = RegisterScreen(self) 
         self.user_home_screen = UserHomeScreen(self, username="")  # username דיפולטיבי
-        self.generate_screen = GenerateScreen(self)
+        self.generate_screen = GenerateScreen(self, username="")
 
         self.addWidget(self.user_home_screen)
         self.addWidget(self.generate_screen)
