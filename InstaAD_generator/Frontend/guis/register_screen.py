@@ -182,18 +182,18 @@ class RegisterScreen(QWidget):
         business_type = self.type_input.currentText()
         business_field = self.field_input.text()
 
-        success, msg = register_user(username, password, birthdate, business_type, business_field)
+        result = register_user(username, password, birthdate, business_type, business_field)
 
         msg_box = QMessageBox()
         msg_box.setWindowTitle("Registration")
-        if success:
+        if result["success"]:
             msg_box.setIcon(QMessageBox.Information)
-            msg_box.setText(msg)
+            msg_box.setText(result["message"])
             msg_box.exec_()
             self.parent.setCurrentWidget(self.parent.welcome_screen)
         else:
             msg_box.setIcon(QMessageBox.Warning)
-            msg_box.setText(msg)
+            msg_box.setText(result["message"])
             msg_box.exec_()
 
     def back_clicked(self):

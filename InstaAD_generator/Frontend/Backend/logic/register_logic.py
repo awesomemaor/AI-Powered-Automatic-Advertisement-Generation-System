@@ -3,23 +3,23 @@ import requests
 def validate_inputs(username, password, birthdate, business_type, business_field):
     # בדיקה ששום שדה לא ריק
     if not username or not password or not business_field:
-        return False, "Please fill all fields."
+        return {"success": False, "message": "Please fill all fields."}
 
     # בדיקה בסיסית על אורך סיסמה
     if len(password) < 4:
-        return False, "Password must be at least 4 characters."
+        return {"success": False, "message": "Password must be at least 4 characters."}
 
     # בדיקה על תחום העסק
     if len(business_field) < 2:
-        return False, "Business field too short."
+        return {"success": False, "message": "Business field too short."}
 
-    return True, "Valid"
+    return {"success": True, "message": "Valid"}
 
 
 def register_user(username, password, birthdate, business_type, business_field):
-    valid, msg = validate_inputs(username, password, birthdate, business_type, business_field)
-    if not valid:
-        return False, msg
+    validation = validate_inputs(username, password, birthdate, business_type, business_field)
+    if not validation["success"]:
+        return {"success": False, "message": validation["message"]}
 
     try:
         print("Sending register request...")
