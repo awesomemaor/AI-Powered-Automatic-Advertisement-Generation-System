@@ -1,8 +1,9 @@
 # guis/generate_screen.py
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QGraphicsDropShadowEffect
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QGraphicsDropShadowEffect, QMessageBox
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import Qt
 from Backend.logic.login_logic import logout_user_request
+from Backend.logic.generate_ad_logic import handle_generate
 
 class GenerateScreen(QWidget):
     def __init__(self, parent, username, user_home_screen=None):
@@ -149,6 +150,8 @@ class GenerateScreen(QWidget):
         shadow.setYOffset(5)
         shadow.setColor(QColor(102, 126, 234, 150))
         generate_btn.setGraphicsEffect(shadow)
+
+        generate_btn.clicked.connect(self.on_generate_clicked)
         card_layout.addWidget(generate_btn)
 
         card_widget.setLayout(card_layout)
@@ -158,3 +161,20 @@ class GenerateScreen(QWidget):
     def on_logout(self):
         logout_user_request(self.username)
         self.parent.setCurrentWidget(self.parent.welcome_screen)
+
+    def on_generate_clicked(self):
+        prompt = self.prompt_input.text()
+
+        result = handle_generate(prompt, self.username)
+
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle("Keyword Extraction")
+
+        if result["success"]:
+            msg_box.setIcon(QMessageBox.Information)
+            msg_box.setText(result["message"])
+        else:
+            msg_box.setIcon(QMessageBox.Warning)
+            msg_box.setText(result["message"])
+
+        msg_box.exec_()
