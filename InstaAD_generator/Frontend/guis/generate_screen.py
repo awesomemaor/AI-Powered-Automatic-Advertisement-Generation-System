@@ -4,6 +4,7 @@ from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import Qt
 from Backend.logic.login_logic import logout_user_request
 from Backend.logic.generate_ad_logic import handle_generate
+from guis.ad_preview_screen import AdPreviewScreen
 
 class GenerateScreen(QWidget):
     def __init__(self, parent, username, user_home_screen=None):
@@ -164,17 +165,29 @@ class GenerateScreen(QWidget):
 
     def on_generate_clicked(self):
         prompt = self.prompt_input.text()
-
         result = handle_generate(prompt, self.username)
 
-        msg_box = QMessageBox()
-        msg_box.setWindowTitle("Keyword Extraction")
-
         if result["success"]:
-            msg_box.setIcon(QMessageBox.Information)
-            msg_box.setText(result["message"])
-        else:
-            msg_box.setIcon(QMessageBox.Warning)
-            msg_box.setText(result["message"])
+            videos = result["data"]["videos"]
 
-        msg_box.exec_()
+            if videos:
+                # הסבר בשיבלנו שנבין: שומר את החלון שמציג סרטון באובייקט ככה שהפונקציה תיסגר אז הוא ישמר בחלון
+                self.preview_window = AdPreviewScreen(videos[0], self.return_from_preview)
+
+                self.hide()
+                self.preview_window.show()
+                return
+
+        # fallback – במקרה שאין וידאו
+        msg = QMessageBox()
+        msg.setWindowTitle("Error")
+        msg.setText(result.get("message", "Unknown error"))
+        msg.exec_()
+
+    # הסבר בשילנו: כשבחלון הסרטון לוחצים אחורה הוא סוגר אותו וזוכר לחזור ל self.show שזה בעצם החלון של האפליקציה הראשי
+    def return_from_preview(self):
+        """נקראת כשהמשתמש לוחץ Try Again"""
+        if self.preview_window:
+            self.preview_window.close()
+            self.preview_window = None
+        self.show()

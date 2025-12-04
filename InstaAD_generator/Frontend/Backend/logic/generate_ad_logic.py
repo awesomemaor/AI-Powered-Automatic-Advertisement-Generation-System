@@ -1,11 +1,32 @@
 import requests
-#from keybert import KeyBERT
-#import spacy
-
-#nlp = spacy.load("en_core_web_sm")
-#kw_model = KeyBERT(model=nlp)
-
 import re
+
+YOUTUBE_API_KEY = "AIzaSyDi6skFKvs4RdvA-A56dubZ6FmMMG800Mw"
+
+def search_youtube_videos(query: str):
+    url = "https://www.googleapis.com/youtube/v3/search"
+    params = {
+        "part": "snippet",
+        "q": query,
+        "key": YOUTUBE_API_KEY,
+        "type": "video",
+        "maxResults": 5,
+        "safeSearch": "strict"
+    }
+
+    response = requests.get(url, params=params)
+    response.raise_for_status()
+    data = response.json()
+
+    videos = []
+    for item in data.get("items", []):
+        videos.append({
+            "title": item["snippet"]["title"],
+            "videoId": item["id"]["videoId"],
+            "thumbnail": item["snippet"]["thumbnails"]["high"]["url"]
+        })
+
+    return videos
 
 def extract_keywords(prompt: str):
     # Lowercase
@@ -66,14 +87,28 @@ def handle_generate(prompt, user_id):
 
         response.raise_for_status()
 
-        return {
-            "success": True,
-            "message": "Keywords saved!",
-            "data": {"keywords": keywords}
-        }
-
     except Exception as e:
         return {
             "success": False,
             "message": f"Server error: {e}"
         }
+
+    # 3. Search YouTube videos
+    search_query = " ".join(keywords) if keywords else prompt
+    videos = search_youtube_videos(search_query)
+
+    if not videos:
+        return {
+            "success": True,
+            "message": "Keywords saved, but no videos found.",
+            "videos": []
+        }
+
+    return {
+        "success": True,
+        "message": "Keywords saved and videos found!",
+        "data": {
+            "keywords": keywords,
+            "videos": videos
+        }
+    }

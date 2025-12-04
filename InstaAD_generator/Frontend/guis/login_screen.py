@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButt
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import Qt
 from Backend.logic.login_logic import login_user
+from Backend.logic.login_logic import logout_user_request
 
 class LoginScreen(QWidget):
     def __init__(self, parent):
@@ -176,6 +177,32 @@ class LoginScreen(QWidget):
             self.parent.setCurrentWidget(user_home)
 
         else:
-            msg.setText("Login failed: " + result["message"])
-            msg.setIcon(QMessageBox.Critical)
-            msg.exec_()
+            if result["message"] == "User already logged in.":
+                msg = QMessageBox()
+                msg.setWindowTitle("User Already Logged In")
+                msg.setText("User already logged in.\nWould you like to sign out now?")
+                msg.setIcon(QMessageBox.Question)
+                msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+
+                choice = msg.exec_()
+
+                if choice == QMessageBox.Yes:
+                    logout_user_request(username)
+
+                    msg = QMessageBox()
+                    msg.setWindowTitle("Logged Out")
+                    msg.setText("You have been logged out. Please log in again.")
+                    msg.setIcon(QMessageBox.Information)
+                    msg.exec_()
+
+                    self.parent.setCurrentWidget(self.parent.welcome_screen)
+                    return
+                
+                else:
+                    return
+            
+            else:
+                msg = QMessageBox()
+                msg.setText("Login failed: " + result["message"])
+                msg.setIcon(QMessageBox.Critical)
+                msg.exec_()
