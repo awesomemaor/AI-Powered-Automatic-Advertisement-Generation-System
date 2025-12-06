@@ -16,7 +16,7 @@ async def save_keywords(req: KeywordRequest):
 
     result = customers_collection.update_one(
         {"username": user_id},
-        {"$push": {"searched_keywords": {"$each": keywords}}}
+        {"$addToSet": {"searched_keywords": {"$each": keywords}}}
     )
 
     if result.modified_count == 0:

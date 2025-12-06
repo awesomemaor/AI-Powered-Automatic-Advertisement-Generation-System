@@ -31,7 +31,7 @@ def register_user(data: RegisterRequest):
         "business_type": data.business_type,
         "business_field": data.business_field,
         "connected": False,
-        "searched_keywords": [data.business_field] #שמירה של מילות חיפוש
+        "searched_keywords": [data.business_field.lower()] #שמירה של מילות חיפוש
     }
 
     result = customers_collection.insert_one(new_user)
