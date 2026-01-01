@@ -168,11 +168,11 @@ class GenerateScreen(QWidget):
         result = handle_generate(prompt, self.username)
 
         if result["success"]:
-            videos = result["data"]["videos"]
+            data = result["data"]
 
-            if videos:
+            if data:
                 # הסבר בשיבלנו שנבין: שומר את החלון שמציג סרטון באובייקט ככה שהפונקציה תיסגר אז הוא ישמר בחלון
-                self.preview_window = AdPreviewScreen(videos[0], self.return_from_preview)
+                self.preview_window = AdPreviewScreen(data, self.return_from_preview)
 
                 self.hide()
                 self.preview_window.show()

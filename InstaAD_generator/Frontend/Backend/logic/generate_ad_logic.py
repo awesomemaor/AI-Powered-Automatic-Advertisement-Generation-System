@@ -1,32 +1,39 @@
 import requests
 import re
+import os
 
-YOUTUBE_API_KEY = "AIzaSyDi6skFKvs4RdvA-A56dubZ6FmMMG800Mw"
+GOOGLE_AI_API_KEY = os.getenv("AIzaSyAMevFDxpW1sQ1DBFTxaeDglAAJ_-dbmb4")
 
-def search_youtube_videos(query: str):
-    url = "https://www.googleapis.com/youtube/v3/search"
-    params = {
-        "part": "snippet",
-        "q": query,
-        "key": YOUTUBE_API_KEY,
-        "type": "video",
-        "maxResults": 5,
-        "safeSearch": "strict"
+def generate_video_with_google_ai(prompt: str):
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+
+    headers = {
+        "Content-Type": "application/json"
     }
 
-    response = requests.get(url, params=params)
+    params = {
+        "key": GOOGLE_AI_API_KEY
+    }
+
+    body = {
+        "contents": [{
+            "parts": [{
+                "text": f"Generate a short advertisement video idea for: {prompt}"
+            }]
+        }]
+    }
+
+    response = requests.post(url, headers=headers, params=params, json=body)
     response.raise_for_status()
     data = response.json()
 
-    videos = []
-    for item in data.get("items", []):
-        videos.append({
-            "title": item["snippet"]["title"],
-            "videoId": item["id"]["videoId"],
-            "thumbnail": item["snippet"]["thumbnails"]["high"]["url"]
-        })
+    text = data["candidates"][0]["content"]["parts"][0]["text"]
 
-    return videos
+    return {
+        "title": "AI Generated Ad Concept",
+        "description": text,
+        "video_url": None  # Veo → async / future
+    }
 
 def extract_keywords(prompt: str):
     # Lowercase
@@ -66,49 +73,22 @@ def extract_keywords(prompt: str):
 
 def handle_generate(prompt, user_id):
     if len(prompt) < 5:
-        return {
-            "success": False,
-            "message": "Prompt is too short."
-        }
+        return {"success": False, "message": "Prompt is too short."}
 
-    # 1. Extract keywords
     keywords = extract_keywords(prompt)
-    print("Extracted keywords:", keywords)
 
-    # 2. Send to backend
-    try:
-        response = requests.post(
-            "http://127.0.0.1:8000/save_keywords",
-            json={
-                "user_id": user_id,
-                "keywords": keywords
-            }
-        )
+    requests.post(
+        "http://127.0.0.1:8000/save_keywords",
+        json={"user_id": user_id, "keywords": keywords}
+    )
 
-        response.raise_for_status()
-
-    except Exception as e:
-        return {
-            "success": False,
-            "message": f"Server error: {e}"
-        }
-
-    # 3. Search YouTube videos
-    search_query = " ".join(keywords) if keywords else prompt
-    videos = search_youtube_videos(search_query)
-
-    if not videos:
-        return {
-            "success": True,
-            "message": "Keywords saved, but no videos found.",
-            "videos": []
-        }
+    ai_video = generate_video_with_google_ai(prompt)
 
     return {
         "success": True,
-        "message": "Keywords saved and videos found!",
+        "message": "AI video concept generated",
         "data": {
             "keywords": keywords,
-            "videos": videos
+            "video": ai_video
         }
     }
