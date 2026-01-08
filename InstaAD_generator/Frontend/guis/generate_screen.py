@@ -164,25 +164,35 @@ class GenerateScreen(QWidget):
         self.parent.setCurrentWidget(self.parent.welcome_screen)
 
     def on_generate_clicked(self):
-        prompt = self.prompt_input.text()
+        prompt = self.prompt_input.text().strip()
+        if not prompt:
+            QMessageBox.warning(self, "Error", "Please enter a prompt")
+            return
+
         result = handle_generate(prompt, self.username)
 
-        if result["success"]:
-            data = result["data"]
+        if result.get("success"):
+            data = result.get("data", {})
 
-            if data:
-                # הסבר בשיבלנו שנבין: שומר את החלון שמציג סרטון באובייקט ככה שהפונקציה תיסגר אז הוא ישמר בחלון
-                self.preview_window = AdPreviewScreen(data, self.return_from_preview)
-
+            task_id = data.get("task_id")
+            if task_id:
+                # יוצרים מסך Preview שיודע לעבוד עם task_id
+                self.preview_window = AdPreviewScreen(
+                    task_id=task_id,
+                    keywords=data.get("keywords", []),
+                    go_back_callback=self.return_from_preview
+                )
+                
                 self.hide()
                 self.preview_window.show()
                 return
 
-        # fallback – במקרה שאין וידאו
-        msg = QMessageBox()
-        msg.setWindowTitle("Error")
-        msg.setText(result.get("message", "Unknown error"))
-        msg.exec_()
+        # fallback
+        QMessageBox.critical(
+            self,
+            "Error",
+            result.get("message", "Video generation failed")
+        )
 
     # הסבר בשילנו: כשבחלון הסרטון לוחצים אחורה הוא סוגר אותו וזוכר לחזור ל self.show שזה בעצם החלון של האפליקציה הראשי
     def return_from_preview(self):

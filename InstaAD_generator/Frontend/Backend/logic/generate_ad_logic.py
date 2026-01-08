@@ -2,93 +2,94 @@ import requests
 import re
 import os
 
-GOOGLE_AI_API_KEY = os.getenv("AIzaSyAMevFDxpW1sQ1DBFTxaeDglAAJ_-dbmb4")
+KIE_API_KEY = os.getenv("KIE_API_KEY")  # אל תשים מפתח בקוד!
+KIE_CREATE_TASK_URL = "https://api.kie.ai/api/v1/jobs/createTask"
+print("KIE_API_KEY =", os.getenv("KIE_API_KEY"))
 
-def generate_video_with_google_ai(prompt: str):
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
-
-    headers = {
-        "Content-Type": "application/json"
-    }
-
-    params = {
-        "key": GOOGLE_AI_API_KEY
-    }
-
-    body = {
-        "contents": [{
-            "parts": [{
-                "text": f"Generate a short advertisement video idea for: {prompt}"
-            }]
-        }]
-    }
-
-    response = requests.post(url, headers=headers, params=params, json=body)
-    response.raise_for_status()
-    data = response.json()
-
-    text = data["candidates"][0]["content"]["parts"][0]["text"]
-
-    return {
-        "title": "AI Generated Ad Concept",
-        "description": text,
-        "video_url": None  # Veo → async / future
-    }
-
+# ======================
+# Keywords
+# ======================
 def extract_keywords(prompt: str):
-    # Lowercase
     text = prompt.lower()
-
-    # Remove punctuation
     text = re.sub(r"[^a-zA-Z0-9\s]", "", text)
-
-    # Split into words
     words = text.split()
 
-    # English stop words
     stop_words = {
-        "the", "and", "is", "in", "on", "at", "to", "for", "a", "an", "of", "make", "ad",
-        "create", "generate", "with", "image", "video", "text", "advertisement", "advert", "promotion",
-        "this", "that", "these", "those", "it", "its", "by", "as", "want", "from", "or", "be", "are",
-        "was", "were", "has", "have", "had", "about", "not", "but", "if", "then", "so", "we", "you", "he", "she", "they",
-        "i", "my", "me", "your", "yourself", "himself", "herself", "ourselves", "themselves", "all", "any", "both", "each",
-        "few", "more", "most", "other", "some", "such", "no", "nor", "only", "own", "same", "too", "very", "s", "t", "can", "will", "just",
-        "with", "this", "that", "these", "those", "it", "its", "by", "as", "want",
-        "from", "or", "be", "are", "was", "were", "has", "have", "had", "about", 
-        "not", "but", "if", "then", "so", "we", "you", "he", "she", "they", "i", "my", "me", "your"
+        "the", "and", "is", "in", "on", "at", "to", "for", "a", "an", "of",
+        "create", "generate", "video", "advertisement", "ad", "promotion",
+        "with", "this", "that", "it", "by", "as", "from", "or", "be"
     }
 
-    keywords = [w for w in words if w not in stop_words]
-
-    # Remove duplicates while keeping order
     seen = set()
     unique = []
-    for w in keywords:
-        if w not in seen:
+    for w in words:
+        if w not in stop_words and w not in seen:
             unique.append(w)
             seen.add(w)
 
     return unique
 
 
-def handle_generate(prompt, user_id):
-    if len(prompt) < 5:
-        return {"success": False, "message": "Prompt is too short."}
+# ======================
+# Seedance – create task
+# ======================
+def create_seedance_video_task(prompt: str):
+    url = "https://api.kie.ai/api/v1/jobs/createTask"
 
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {KIE_API_KEY}"
+    }
+
+    body = {
+        "model": "bytedance/seedance-1.5-pro",
+        "input": {
+            "prompt": prompt,
+            "aspect_ratio": "1:1",
+            "resolution": "480p",
+            "duration": "4"
+        }
+    }
+
+    response = requests.post(url, headers=headers, json=body, timeout=20)
+    data = response.json()
+
+    if response.status_code != 200:
+        raise Exception(f"Seedance error: {data}")
+
+    return data["data"]["taskId"]
+
+
+# ======================
+# Main entry
+# ======================
+def handle_generate(prompt: str, user_id: str):
+    if len(prompt) < 5:
+        return {
+            "success": False,
+            "message": "Prompt is too short"
+        }
+
+    # 1. keywords
     keywords = extract_keywords(prompt)
 
+    # 2. save keywords
     requests.post(
         "http://127.0.0.1:8000/save_keywords",
-        json={"user_id": user_id, "keywords": keywords}
+        json={"user_id": user_id, "keywords": keywords},
+        timeout=5
     )
 
-    ai_video = generate_video_with_google_ai(prompt)
+    # 3. create video task
+    task_id = create_seedance_video_task(prompt)
 
+    # 4. return to frontend
     return {
         "success": True,
-        "message": "AI video concept generated",
+        "message": "Video generation started",
         "data": {
+            "task_id": task_id,
             "keywords": keywords,
-            "video": ai_video
+            "provider": "seedance-1.5-pro"
         }
     }

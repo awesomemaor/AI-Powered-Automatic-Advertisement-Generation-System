@@ -1,88 +1,132 @@
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QPushButton,
-    QHBoxLayout
+    QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout
 )
+from PyQt5.QtCore import Qt, QTimer, QUrl
 from PyQt5.QtGui import QFont
-from PyQt5.QtCore import Qt
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+from PyQt5.QtMultimediaWidgets import QVideoWidget
+import requests
 
 
 class AdPreviewScreen(QWidget):
-    def __init__(self, ad_data: dict, go_back_callback):
+    def __init__(self, task_id: str, keywords: list[str], go_back_callback):
         super().__init__()
 
-        self.ad_data = ad_data
+        self.task_id = task_id
+        self.keywords = keywords
         self.go_back_callback = go_back_callback
 
         self.setWindowTitle("Ad Preview")
-        self.setMinimumSize(500, 400)
+        self.setMinimumSize(600, 450)
 
         self.init_ui()
+        self.start_polling()
 
+    # ======================
+    # UI
+    # ======================
     def init_ui(self):
         layout = QVBoxLayout()
-        layout.setSpacing(20)
-        layout.setAlignment(Qt.AlignTop)
+        layout.setSpacing(15)
 
-        # ---- Title ----
-        title = QLabel("AI Advertisement Preview")
-        title.setFont(QFont("Segoe UI", 18, QFont.Bold))
-        title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(title)
+        self.title = QLabel("AI Video Advertisement")
+        self.title.setFont(QFont("Segoe UI", 18, QFont.Bold))
+        self.title.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.title)
 
-        # ---- Status ----
-        status = QLabel("Status: Generated successfully")
-        status.setFont(QFont("Segoe UI", 12))
-        status.setAlignment(Qt.AlignCenter)
-        layout.addWidget(status)
+        self.status_label = QLabel("Status: Generating video...")
+        self.status_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.status_label)
 
-        # ---- Placeholder for video ----
-        preview_box = QLabel("🎬 Video Preview Placeholder\n(Google AI Studio output)")
-        preview_box.setAlignment(Qt.AlignCenter)
-        preview_box.setStyleSheet("""
-            QLabel {
-                background-color: #f2f2f2;
-                border: 2px dashed #aaa;
-                border-radius: 12px;
-                padding: 40px;
-                color: #555;
-            }
-        """)
-        preview_box.setMinimumHeight(180)
-        layout.addWidget(preview_box)
+        # ---- Video Player ----
+        self.video_widget = QVideoWidget()
+        self.video_widget.hide()
+        layout.addWidget(self.video_widget)
 
-        # ---- Prompt / keywords ----
-        if "keywords" in self.ad_data:
-            keywords_label = QLabel(
-                "Keywords used:\n" + ", ".join(self.ad_data["keywords"])
-            )
-            keywords_label.setWordWrap(True)
-            keywords_label.setAlignment(Qt.AlignCenter)
-            layout.addWidget(keywords_label)
+        # ---- Keywords ----
+        if self.keywords:
+            kw = QLabel("Keywords:\n" + ", ".join(self.keywords))
+            kw.setAlignment(Qt.AlignCenter)
+            layout.addWidget(kw)
 
         # ---- Buttons ----
-        btn_layout = QHBoxLayout()
-
-        self.save_btn = QPushButton("Save Ad")
+        btns = QHBoxLayout()
         self.try_again_btn = QPushButton("Try Again")
+        self.save_btn = QPushButton("Save Ad")
+        self.save_btn.setEnabled(False)
 
-        for btn in (self.save_btn, self.try_again_btn):
-            btn.setMinimumHeight(40)
-            btn.setCursor(Qt.PointingHandCursor)
+        btns.addWidget(self.try_again_btn)
+        btns.addWidget(self.save_btn)
 
-        btn_layout.addWidget(self.try_again_btn)
-        btn_layout.addWidget(self.save_btn)
-
-        layout.addLayout(btn_layout)
-
+        layout.addLayout(btns)
         self.setLayout(layout)
 
-        # ---- Events ----
         self.try_again_btn.clicked.connect(self.on_try_again)
         self.save_btn.clicked.connect(self.save_ad)
 
+        # Player
+        self.player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
+        self.player.setVideoOutput(self.video_widget)
+
+    # ======================
+    # Polling
+    # ======================
+    def start_polling(self):
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.check_status)
+        self.timer.start(3000)  # כל 3 שניות
+
+    def check_status(self):
+        try:
+            response = requests.post(
+                "http://127.0.0.1:8000/check-video-status",
+                json={"task_id": self.task_id},
+                timeout=10
+            )
+
+            data = response.json()
+            status = data.get("status", "UNKNOWN")
+
+            if status == "PROCESSING":
+                self.status_label.setText("Status: Still generating...")
+
+            elif status == "FAILED":
+                self.timer.stop()
+                self.status_label.setText("❌ Generation failed")
+
+            elif status == "SUCCESS":
+                self.timer.stop()
+                video_url = data.get("video_url")
+                if video_url:
+                    self.load_video(video_url)
+                else:
+                    self.status_label.setText("❌ Video URL missing")
+
+            else:
+                self.status_label.setText(f"Status: {status}")
+
+        except Exception as e:
+            self.status_label.setText(f"Error: {e}")
+
+    # ======================
+    # Video
+    # ======================
+    def load_video(self, url: str):
+        self.status_label.setText("✅ Video ready!")
+        self.video_widget.show()
+
+        self.player.setMedia(QMediaContent(QUrl(url)))
+        self.player.play()
+
+        self.save_btn.setEnabled(True)
+
+    # ======================
+    # Events
+    # ======================
     def on_try_again(self):
+        self.timer.stop()
         self.close()
         self.go_back_callback()
 
     def save_ad(self):
-        print("Saved ad:", self.ad_data)
+        print(f"Saved video task: {self.task_id}")
