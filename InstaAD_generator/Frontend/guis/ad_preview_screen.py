@@ -1,11 +1,15 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout
 )
-from PyQt5.QtCore import Qt, QTimer, QUrl
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
-from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
+
 import requests
+import tempfile
+import os
+import sys
+import vlc
 
 
 class AdPreviewScreen(QWidget):
@@ -38,7 +42,7 @@ class AdPreviewScreen(QWidget):
         self.status_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.status_label)
 
-        # ---- Video Player ----
+        # ---- Video Widget ----
         self.video_widget = QVideoWidget()
         self.video_widget.hide()
         layout.addWidget(self.video_widget)
@@ -57,16 +61,16 @@ class AdPreviewScreen(QWidget):
 
         btns.addWidget(self.try_again_btn)
         btns.addWidget(self.save_btn)
-
         layout.addLayout(btns)
+
         self.setLayout(layout)
 
         self.try_again_btn.clicked.connect(self.on_try_again)
         self.save_btn.clicked.connect(self.save_ad)
 
-        # Player
-        self.player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
-        self.player.setVideoOutput(self.video_widget)
+        # ---- VLC Player ----
+        self.vlc_instance = vlc.Instance()
+        self.vlc_player = self.vlc_instance.media_player_new()
 
     # ======================
     # Polling
@@ -74,7 +78,7 @@ class AdPreviewScreen(QWidget):
     def start_polling(self):
         self.timer = QTimer()
         self.timer.timeout.connect(self.check_status)
-        self.timer.start(3000)  # כל 3 שניות
+        self.timer.start(3000)
 
     def check_status(self):
         try:
@@ -109,24 +113,57 @@ class AdPreviewScreen(QWidget):
             self.status_label.setText(f"Error: {e}")
 
     # ======================
-    # Video
+    # Video (VLC)
     # ======================
     def load_video(self, url: str):
         self.status_label.setText("✅ Video ready!")
+
+        # Download video locally
+        r = requests.get(url, stream=True)
+        temp_path = os.path.join(
+            tempfile.gettempdir(),
+            f"{self.task_id}.mp4"
+        )
+
+        with open(temp_path, "wb") as f:
+            for chunk in r.iter_content(1024 * 1024):
+                f.write(chunk)
+
+        print("VIDEO SAVED TO:", temp_path)
+
         self.video_widget.show()
 
-        self.player.setMedia(QMediaContent(QUrl(url)))
-        self.player.play()
+        media = self.vlc_instance.media_new(temp_path)
+        self.vlc_player.set_media(media)
+        self._bind_vlc_to_widget()
+        self.vlc_player.play()
 
         self.save_btn.setEnabled(True)
+
+    def _bind_vlc_to_widget(self):
+        win_id = int(self.video_widget.winId())
+
+        if sys.platform.startswith("win"):
+            self.vlc_player.set_hwnd(win_id)
+        elif sys.platform.startswith("linux"):
+            self.vlc_player.set_xwindow(win_id)
+        elif sys.platform == "darwin":
+            self.vlc_player.set_nsobject(win_id)
 
     # ======================
     # Events
     # ======================
     def on_try_again(self):
         self.timer.stop()
+        if self.vlc_player.is_playing():
+            self.vlc_player.stop()
         self.close()
         self.go_back_callback()
 
     def save_ad(self):
         print(f"Saved video task: {self.task_id}")
+
+    def closeEvent(self, event):
+        if self.vlc_player.is_playing():
+            self.vlc_player.stop()
+        event.accept()

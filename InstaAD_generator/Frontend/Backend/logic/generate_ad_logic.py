@@ -1,7 +1,10 @@
 import requests
+import uuid
+import time
 import re
 import os
 
+USE_MOCK = True
 KIE_API_KEY = os.getenv("KIE_API_KEY")  # אל תשים מפתח בקוד!
 KIE_CREATE_TASK_URL = "https://api.kie.ai/api/v1/jobs/createTask"
 print("KIE_API_KEY =", os.getenv("KIE_API_KEY"))
@@ -34,6 +37,10 @@ def extract_keywords(prompt: str):
 # Seedance – create task
 # ======================
 def create_seedance_video_task(prompt: str):
+    if USE_MOCK:
+        print("MOCK MODE: creating fake task")
+        return f"mock-task-{uuid.uuid4()}"
+    
     url = "https://api.kie.ai/api/v1/jobs/createTask"
 
     headers = {
@@ -52,12 +59,22 @@ def create_seedance_video_task(prompt: str):
     }
 
     response = requests.post(url, headers=headers, json=body, timeout=20)
-    data = response.json()
+
+    try:
+        data = response.json()
+    except ValueError:
+        raise RuntimeError(f"Seedance API did not return JSON: {response.text}")
 
     if response.status_code != 200:
-        raise Exception(f"Seedance error: {data}")
+        raise RuntimeError(f"Seedance API error {response.status_code}: {data}")
 
-    return data["data"]["taskId"]
+    # בדיקה אם data["data"] קיים
+    if not data.get("data") or not data["data"].get("taskId"):
+        raise RuntimeError(f"taskId missing in API response: {data}")
+
+    task_id = data["data"]["taskId"]
+    print(f"Created task with ID: {task_id}")  # הדפסה ללוג
+    return task_id
 
 
 # ======================
