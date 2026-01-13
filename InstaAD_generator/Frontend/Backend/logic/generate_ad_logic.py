@@ -5,6 +5,7 @@ import uuid
 import time
 import re
 import os
+from Backend.logic.gemini_helper import enhance_prompt_with_gemini
 
 USE_MOCK = False
 KIE_API_KEY = os.getenv("KIE_API_KEY")  
@@ -47,7 +48,7 @@ def create_seedance_video_task(prompt: str):
         "model": "bytedance/seedance-1.5-pro",
         "input": {
             "prompt": prompt,
-            "aspect_ratio": "1:1",
+            "aspect_ratio": "16:9",
             "resolution": "480p",
             "duration": "4"
         }
@@ -78,9 +79,13 @@ def handle_generate(prompt: str, user_id: str):
             "success": False,
             "message": "Prompt is too short"
         }
+    
+    print("Asking Gemini to enhance the prompt...")
+    final_prompt = enhance_prompt_with_gemini(prompt) # enhancing the user prompt (hashuv!!)
+    print("Final Prompt:", final_prompt)
 
     # 1. keywords
-    keywords = extract_keywords(prompt)
+    keywords = extract_keywords(final_prompt)
 
     # 2. save keywords
     requests.post(
@@ -90,7 +95,7 @@ def handle_generate(prompt: str, user_id: str):
     )
 
     # 3. create video task
-    task_id = create_seedance_video_task(prompt)
+    task_id = create_seedance_video_task(final_prompt)
 
     # 4. return to frontend
     return {

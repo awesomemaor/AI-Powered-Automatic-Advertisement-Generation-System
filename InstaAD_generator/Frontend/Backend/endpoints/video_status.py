@@ -8,7 +8,7 @@ from pydantic import BaseModel
 router = APIRouter()
 
 KIE_API_KEY = os.getenv("KIE_API_KEY")
-KIE_STATUS_URL = "https://api.kie.ai/api/v1/jobs/queryTask"
+KIE_STATUS_URL = "https://api.kie.ai/api/v1/jobs/recordInfo"
 
 class StatusRequest(BaseModel):
     task_id: str
@@ -24,24 +24,29 @@ def check_video_status(req: StatusRequest):
     }
 
     response = requests.get(
-        KIE_STATUS_URL,
+        "https://api.kie.ai/api/v1/jobs/recordInfo",
         headers=headers,
         params=params,
         timeout=15
     )
+    response.raise_for_status()
 
     data = response.json()
-    print("KIE status response:", data)
+    print("KIE recordInfo response:", data)
 
-    status = data.get("data", {}).get("status")
+    state = data.get("data", {}).get("state")
 
-    if status == "SUCCESS":
+    if state == "success":
+        import json
+        result_json = json.loads(data["data"]["resultJson"])
+        video_url = result_json["resultUrls"][0]
+
         return {
             "status": "SUCCESS",
-            "video_url": data["data"]["output"]["video_url"]
+            "video_url": video_url
         }
 
-    if status == "FAILED":
+    if state == "failed":
         return {"status": "FAILED"}
 
     return {"status": "PROCESSING"}
