@@ -7,7 +7,7 @@ import re
 import os
 from Backend.logic.gemini_helper import enhance_prompt_with_gemini
 
-USE_MOCK = False
+USE_MOCK = True  # for debug purposes
 KIE_API_KEY = os.getenv("KIE_API_KEY")  
 KIE_CREATE_TASK_URL = "https://api.kie.ai/api/v1/jobs/createTask"
 print("KIE_API_KEY =", os.getenv("KIE_API_KEY"))
@@ -39,6 +39,11 @@ def extract_keywords(prompt: str):
 # Create Seedance Task (KIE)
 # ======================
 def create_seedance_video_task(prompt: str):
+    if USE_MOCK:
+        mock_task_id = f"mock-{uuid.uuid4().hex[:8]}"
+        print("MOCK MODE: returning fake task_id:", mock_task_id)
+        return mock_task_id
+    
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {KIE_API_KEY}"

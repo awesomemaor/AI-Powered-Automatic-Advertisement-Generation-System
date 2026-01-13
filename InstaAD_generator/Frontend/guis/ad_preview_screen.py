@@ -47,12 +47,6 @@ class AdPreviewScreen(QWidget):
         self.video_widget.hide()
         layout.addWidget(self.video_widget)
 
-        # ---- Keywords ----
-        if self.keywords:
-            kw = QLabel("Keywords:\n" + ", ".join(self.keywords))
-            kw.setAlignment(Qt.AlignCenter)
-            layout.addWidget(kw)
-
         # ---- Buttons ----
         btns = QHBoxLayout()
         self.try_again_btn = QPushButton("Try Again")
@@ -118,22 +112,18 @@ class AdPreviewScreen(QWidget):
     def load_video(self, url: str):
         self.status_label.setText("✅ Video ready!")
 
-        # Download video locally
         r = requests.get(url, stream=True)
-        temp_path = os.path.join(
-            tempfile.gettempdir(),
-            f"{self.task_id}.mp4"
-        )
+        temp_path = os.path.join(tempfile.gettempdir(), f"{self.task_id}.mp4")
 
         with open(temp_path, "wb") as f:
             for chunk in r.iter_content(1024 * 1024):
                 f.write(chunk)
 
-        print("VIDEO SAVED TO:", temp_path)
-
         self.video_widget.show()
 
         media = self.vlc_instance.media_new(temp_path)
+        media.add_option("input-repeat=9999")  # 🔁 LOOP FOREVER
+
         self.vlc_player.set_media(media)
         self._bind_vlc_to_widget()
         self.vlc_player.play()

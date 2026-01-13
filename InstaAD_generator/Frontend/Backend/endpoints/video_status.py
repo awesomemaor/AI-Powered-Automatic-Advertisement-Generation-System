@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
+USE_MOCK = True  # for debug purposes
 KIE_API_KEY = os.getenv("KIE_API_KEY")
 KIE_STATUS_URL = "https://api.kie.ai/api/v1/jobs/recordInfo"
 
@@ -15,6 +16,16 @@ class StatusRequest(BaseModel):
 
 @router.post("/check-video-status")
 def check_video_status(req: StatusRequest):
+    # ---------- MOCK ----------
+    if USE_MOCK and req.task_id.startswith("mock-"):
+        print("MOCK MODE: returning local video")
+
+        return {
+            "status": "SUCCESS",
+            "video_url": "https://tempfile.aiquickdraw.com/h/453fb6c376103ab6551e00201cf9c149_1768321522.mp4"
+        }
+
+    # ---------- REAL KIE ----------
     headers = {
         "Authorization": f"Bearer {KIE_API_KEY}"
     }
