@@ -1,11 +1,13 @@
 import requests
+import replicate
+import threading
 import uuid
 import time
 import re
 import os
 
-USE_MOCK = True
-KIE_API_KEY = os.getenv("KIE_API_KEY")  # אל תשים מפתח בקוד!
+USE_MOCK = False
+KIE_API_KEY = os.getenv("KIE_API_KEY")  
 KIE_CREATE_TASK_URL = "https://api.kie.ai/api/v1/jobs/createTask"
 print("KIE_API_KEY =", os.getenv("KIE_API_KEY"))
 
@@ -32,17 +34,10 @@ def extract_keywords(prompt: str):
 
     return unique
 
-
 # ======================
-# Seedance – create task
+# Create Seedance Task (KIE)
 # ======================
 def create_seedance_video_task(prompt: str):
-    if USE_MOCK:
-        print("MOCK MODE: creating fake task")
-        return f"mock-task-{uuid.uuid4()}"
-    
-    url = "https://api.kie.ai/api/v1/jobs/createTask"
-
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {KIE_API_KEY}"
@@ -58,24 +53,21 @@ def create_seedance_video_task(prompt: str):
         }
     }
 
-    response = requests.post(url, headers=headers, json=body, timeout=20)
+    response = requests.post(
+        KIE_CREATE_TASK_URL,
+        headers=headers,
+        json=body,
+        timeout=20
+    )
 
-    try:
-        data = response.json()
-    except ValueError:
-        raise RuntimeError(f"Seedance API did not return JSON: {response.text}")
+    data = response.json()
 
-    if response.status_code != 200:
-        raise RuntimeError(f"Seedance API error {response.status_code}: {data}")
-
-    # בדיקה אם data["data"] קיים
-    if not data.get("data") or not data["data"].get("taskId"):
-        raise RuntimeError(f"taskId missing in API response: {data}")
+    if response.status_code != 200 or not data.get("data", {}).get("taskId"):
+        raise RuntimeError(f"KIE createTask failed: {data}")
 
     task_id = data["data"]["taskId"]
-    print(f"Created task with ID: {task_id}")  # הדפסה ללוג
+    print("Created KIE task:", task_id)
     return task_id
-
 
 # ======================
 # Main entry
@@ -107,6 +99,6 @@ def handle_generate(prompt: str, user_id: str):
         "data": {
             "task_id": task_id,
             "keywords": keywords,
-            "provider": "seedance-1.5-pro"
+            "provider": "bytedance/seedance-1.5-pro (KIE)"
         }
     }
