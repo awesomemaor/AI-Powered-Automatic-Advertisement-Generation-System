@@ -1,5 +1,8 @@
 import requests
 
+# ===============================
+# save ad
+# ===============================
 def handle_save_ad(
     username: str,
     task_id: str,
@@ -39,3 +42,36 @@ def handle_save_ad(
             "success": False,
             "message": str(e)
         }
+
+# ===============================
+# GET saved ads
+# ===============================
+def handle_get_ad(username: str) -> list:
+    try:
+        response = requests.get(
+            f"{"http://127.0.0.1:8000"}/get-ads/{username}",
+            timeout=10
+        )
+
+        if response.status_code == 200:
+            return response.json().get("ads", [])
+
+        return []
+
+    except requests.RequestException:
+        return []
+    
+# ===============================
+# DELETE ad
+# ===============================
+def handle_delete_ad(ad_id: str) -> bool:
+    try:
+        response = requests.delete(
+            f"{"http://127.0.0.1:8000"}/delete-ad/{ad_id}",
+            timeout=10
+        )
+
+        return response.status_code == 200
+
+    except requests.RequestException:
+        return False

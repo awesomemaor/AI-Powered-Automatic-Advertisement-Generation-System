@@ -67,7 +67,7 @@ class AdPreviewScreen(QWidget):
         self.save_btn.clicked.connect(self.save_ad)
 
         # ---- VLC Player ----
-        self.vlc_instance = vlc.Instance()
+        self.vlc_instance = vlc.Instance("--no-xlib", "--quiet", "--no-plugins-cache")
         self.vlc_player = self.vlc_instance.media_player_new()
 
     # ======================

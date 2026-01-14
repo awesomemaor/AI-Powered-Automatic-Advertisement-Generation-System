@@ -130,7 +130,8 @@ class UserHomeScreen(QWidget):
         print("Generate Recommended Advertisement clicked")
 
     def advertisement_history(self):
-        print("Advertisement History clicked")
+        self.parent.ad_history_screen.load_ads(self.username)
+        self.parent.setCurrentWidget(self.parent.ad_history_screen)
 
     def logout_clicked(self):
         result = logout_user_request(self.username)

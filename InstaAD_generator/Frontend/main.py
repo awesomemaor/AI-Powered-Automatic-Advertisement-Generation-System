@@ -8,6 +8,7 @@ from guis.login_screen import LoginScreen
 from guis.register_screen import RegisterScreen
 from guis.userHome_screen import UserHomeScreen
 from guis.generate_screen import GenerateScreen
+from guis.ad_history_screen import AdHistoryScreen
 from PyQt5.QtWidgets import QApplication, QStackedWidget
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -43,14 +44,15 @@ class MainApp(QStackedWidget):
         self.register_screen = RegisterScreen(self) 
         self.user_home_screen = UserHomeScreen(self, username="")  # username דיפולטיבי
         self.generate_screen = GenerateScreen(self, username="")
+        self.ad_history_screen = AdHistoryScreen(self, username="")
 
         self.addWidget(self.user_home_screen)
         self.addWidget(self.generate_screen)
         self.addWidget(self.welcome_screen)  # stacking it to index 0
         self.addWidget(self.login_screen)    # stacking it to index 1
         self.addWidget(self.register_screen)
+        self.addWidget(self.ad_history_screen)
     
-
         self.setCurrentWidget(self.welcome_screen)  # default screen
 
 if __name__ == "__main__":
