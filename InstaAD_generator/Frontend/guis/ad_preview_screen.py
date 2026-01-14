@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
 from PyQt5.QtMultimediaWidgets import QVideoWidget
+from Backend.logic.save_ad_logic import handle_save_ad
 
 import requests
 import tempfile
@@ -13,12 +14,15 @@ import vlc
 
 
 class AdPreviewScreen(QWidget):
-    def __init__(self, task_id: str, keywords: list[str], go_back_callback):
+    def __init__(self, task_id: str, keywords: list[str], username: str, go_back_callback):
         super().__init__()
 
         self.task_id = task_id
         self.keywords = keywords
+        self.username = username
         self.go_back_callback = go_back_callback
+
+        self.current_video_url = None
 
         self.setWindowTitle("Ad Preview")
         self.setMinimumSize(600, 450)
@@ -110,6 +114,8 @@ class AdPreviewScreen(QWidget):
     # Video (VLC)
     # ======================
     def load_video(self, url: str):
+        self.current_video_url = url
+
         self.status_label.setText("✅ Video ready!")
 
         r = requests.get(url, stream=True)
@@ -122,7 +128,7 @@ class AdPreviewScreen(QWidget):
         self.video_widget.show()
 
         media = self.vlc_instance.media_new(temp_path)
-        media.add_option("input-repeat=9999")  # 🔁 LOOP FOREVER
+        media.add_option("input-repeat=9999")  # LOOP FOREVER
 
         self.vlc_player.set_media(media)
         self._bind_vlc_to_widget()
@@ -151,7 +157,16 @@ class AdPreviewScreen(QWidget):
         self.go_back_callback()
 
     def save_ad(self):
-        print(f"Saved video task: {self.task_id}")
+        result = handle_save_ad(
+        username=self.username,
+        task_id=self.task_id,
+        video_url=self.current_video_url,
+        )
+
+        if result["success"]:
+            self.status_label.setText(result["message"])
+        else:
+            self.status_label.setText(result["message"])
 
     def closeEvent(self, event):
         if self.vlc_player.is_playing():

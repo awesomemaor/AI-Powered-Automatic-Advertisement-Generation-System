@@ -17,14 +17,17 @@ from Backend.endpoints.auth_register import router as register_router
 from Backend.endpoints.generate_ad import router as generate_ad_router
 from Backend.endpoints.db_init import customers_collection
 from Backend.endpoints.video_status import router as video_status_router
+from Backend.endpoints.save_ad import router as save_ad_router
 
 # FastAPI app instance (required for Uvicorn)
 app = FastAPI()
 
+# Include routers for different endpoints
 app.include_router(login_router)
 app.include_router(register_router)
 app.include_router(generate_ad_router)
 app.include_router(video_status_router)
+app.include_router(save_ad_router)
 
 # Start FastAPI server in a separate thread
 def start_fastapi():

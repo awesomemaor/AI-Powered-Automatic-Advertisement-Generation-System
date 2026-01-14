@@ -180,9 +180,10 @@ class GenerateScreen(QWidget):
                 self.preview_window = AdPreviewScreen(
                     task_id=task_id,
                     keywords=data.get("keywords", []),
+                    username=self.username,
                     go_back_callback=self.return_from_preview
                 )
-                
+
                 self.hide()
                 self.preview_window.show()
                 return
