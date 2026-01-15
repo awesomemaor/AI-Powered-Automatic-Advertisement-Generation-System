@@ -13,6 +13,20 @@ class SaveAdRequest(BaseModel):
 
 @router.post("/save-ad")
 def save_ad(data: SaveAdRequest):
+
+    # check if ad already saved
+    existing_ad = saved_ads_collection.find_one({
+        "username": data.username,
+        "video_url": data.video_url
+    })
+
+    if existing_ad:
+        raise HTTPException(
+            status_code=400,
+            detail="This video is already saved"
+        )
+
+    # if ad not saved, save it
     ad_data = {
         "username": data.username,
         "task_id": data.task_id,

@@ -34,7 +34,7 @@ def handle_save_ad(
 
         return {
             "success": False,
-            "message": f"Save failed ({response.status_code})"
+            "message": f"Ad already saved"
         }
 
     except requests.RequestException as e:
