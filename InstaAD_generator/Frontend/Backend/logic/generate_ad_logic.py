@@ -36,6 +36,43 @@ def extract_keywords(prompt: str):
     return unique
 
 # ======================
+# Submit feedback
+# ====================== 
+def handle_submit_feedback(user_id: str, feedback: str):
+    if not feedback or len(feedback) < 3:
+        return {
+            "success": False,
+            "message": "Feedback is too short"
+        }
+
+    try:
+        response = requests.post(
+            "http://127.0.0.1:8000/save_feedback",
+            json={
+                "user_id": user_id,
+                "feedback": feedback
+            },
+            timeout=5
+        )
+
+        if response.status_code != 200:
+            return {
+                "success": False,
+                "message": response.json().get("detail", "Failed to save feedback")
+            }
+
+        return {
+            "success": True,
+            "message": "Feedback saved successfully"
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+# ======================
 # Create Seedance Task (KIE)
 # ======================
 def create_seedance_video_task(prompt: str):

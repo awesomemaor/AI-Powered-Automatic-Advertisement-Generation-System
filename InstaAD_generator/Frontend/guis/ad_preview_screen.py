@@ -5,6 +5,7 @@ from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from Backend.logic.save_ad_logic import handle_save_ad
+from Backend.logic.generate_ad_logic import handle_submit_feedback
 
 import requests
 import tempfile
@@ -75,8 +76,7 @@ class AdPreviewScreen(QWidget):
         self.submit_feedback_btn.setEnabled(False)
         layout.addWidget(self.submit_feedback_btn)
 
-        #self.submit_feedback_btn.clicked.connect(self.submit_feedback)
-
+        self.submit_feedback_btn.clicked.connect(self.submit_feedback)
 
         self.setLayout(layout)
 
@@ -144,8 +144,12 @@ class AdPreviewScreen(QWidget):
 
         self.video_widget.show()
 
+        # enlarge window vertically when video is ready
+        current_size = self.size()
+        self.resize(current_size.width(), current_size.height() + 220)
+
         media = self.vlc_instance.media_new(temp_path)
-        media.add_option("input-repeat=9999")  # LOOP FOREVER
+        media.add_option("input-repeat=9999")  # LOOP AD FOREVER
 
         self.vlc_player.set_media(media)
         self._bind_vlc_to_widget()
@@ -186,6 +190,24 @@ class AdPreviewScreen(QWidget):
             self.status_label.setText(result["message"])
         else:
             self.status_label.setText(result["message"])
+    
+    def submit_feedback(self):
+        self.feedback_text = self.feedback_input.toPlainText().strip()
+        
+        if not self.feedback_text:
+            QMessageBox.warning(self, "Feedback", "Please enter feedback before submitting.")
+
+        result = handle_submit_feedback(
+            user_id=self.username,
+            feedback=self.feedback_text
+            )
+
+        if result["success"]:
+            QMessageBox.information(self, "Feedback", result["message"])
+            self.feedback_input.clear()
+            self.submit_feedback_btn.setEnabled(False)
+        else:
+            QMessageBox.warning(self, "Feedback", result["message"])
 
     def closeEvent(self, event):
         if self.vlc_player.is_playing():
