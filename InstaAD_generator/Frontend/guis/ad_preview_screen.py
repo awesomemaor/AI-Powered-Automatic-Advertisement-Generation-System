@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout
+    QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QTextEdit, QMessageBox
 )
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
@@ -23,6 +23,7 @@ class AdPreviewScreen(QWidget):
         self.go_back_callback = go_back_callback
 
         self.current_video_url = None
+        self.feedback_text = ""
 
         self.setWindowTitle("Ad Preview")
         self.setMinimumSize(600, 450)
@@ -37,7 +38,7 @@ class AdPreviewScreen(QWidget):
         layout = QVBoxLayout()
         layout.setSpacing(15)
 
-        self.title = QLabel("AI Video Advertisement")
+        self.title = QLabel("InstaAD Video Advertisement")
         self.title.setFont(QFont("Segoe UI", 18, QFont.Bold))
         self.title.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.title)
@@ -53,13 +54,29 @@ class AdPreviewScreen(QWidget):
 
         # ---- Buttons ----
         btns = QHBoxLayout()
-        self.try_again_btn = QPushButton("Try Again")
+        self.try_again_btn = QPushButton("Regenerate Ad")
         self.save_btn = QPushButton("Save Ad")
         self.save_btn.setEnabled(False)
 
         btns.addWidget(self.try_again_btn)
         btns.addWidget(self.save_btn)
         layout.addLayout(btns)
+
+        # ---- Feedback Section ----
+        self.feedback_input = QTextEdit()
+        self.feedback_input.setPlaceholderText(
+            "Write notes to improve future ads (style, pacing, tone, etc...)"
+        )
+        self.feedback_input.setFixedHeight(90)
+        self.feedback_input.setEnabled(False)
+        layout.addWidget(self.feedback_input)
+
+        self.submit_feedback_btn = QPushButton("Submit Feedback")
+        self.submit_feedback_btn.setEnabled(False)
+        layout.addWidget(self.submit_feedback_btn)
+
+        #self.submit_feedback_btn.clicked.connect(self.submit_feedback)
+
 
         self.setLayout(layout)
 
@@ -135,6 +152,8 @@ class AdPreviewScreen(QWidget):
         self.vlc_player.play()
 
         self.save_btn.setEnabled(True)
+        self.feedback_input.setEnabled(True)
+        self.submit_feedback_btn.setEnabled(True)
 
     def _bind_vlc_to_widget(self):
         win_id = int(self.video_widget.winId())

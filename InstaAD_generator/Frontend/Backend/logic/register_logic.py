@@ -32,7 +32,8 @@ def register_user(username, password, birthdate, business_type, business_field):
                 "business_type": business_type,
                 "business_field": business_field,
                 "connected": False,
-                "searched_keywords": []
+                "searched_keywords": [],
+                "feedback_notes": []
             }
         )
 
