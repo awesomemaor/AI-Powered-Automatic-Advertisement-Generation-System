@@ -1,167 +1,167 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QGraphicsDropShadowEffect
-from PyQt5.QtGui import QFont, QPixmap, QColor
-from PyQt5.QtCore import Qt
+import sys
+import random
 import os
+import math
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QGraphicsDropShadowEffect, QFrame, QHBoxLayout
+from PyQt5.QtGui import QFont, QPixmap, QColor, QPainter, QLinearGradient, QBrush, QPen
+from PyQt5.QtCore import Qt, QTimer, QRectF, QPointF
+
+class Particle:
+    def __init__(self, width, height):
+        self.x = random.random() * width
+        self.y = random.random() * height
+        self.vx = (random.random() - 0.5) * 0.5
+        self.vy = (random.random() - 0.5) * 0.5
+        self.size = random.uniform(1, 3)
+        self.alpha = random.randint(50, 150)
+
+    def move(self, width, height):
+        self.x += self.vx
+        self.y += self.vy
+        if self.x < 0 or self.x > width: self.vx *= -1
+        if self.y < 0 or self.y > height: self.vy *= -1
 
 class WelcomeScreen(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
+        self.particles = [Particle(1200, 800) for _ in range(60)]
         self.initUI()
+        
+        self.gradient_offset = 0
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_frame)
+        self.timer.start(30)
+
+    def update_frame(self):
+        self.gradient_offset += 0.005
+        if self.gradient_offset > 1: self.gradient_offset = 0
+        for p in self.particles:
+            p.move(self.width(), self.height())
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        grad = QLinearGradient(0, 0, self.width(), self.height())
+        grad.setColorAt(0, QColor(15, 12, 41))   
+        grad.setColorAt(0.5 + (0.1 * math.sin(self.gradient_offset * math.pi * 2)), QColor(48, 43, 99)) 
+        grad.setColorAt(1, QColor(36, 36, 62))   
+        painter.fillRect(self.rect(), grad)
+        
+        painter.setPen(Qt.NoPen)
+        for p in self.particles:
+            painter.setBrush(QColor(0, 242, 254, p.alpha)) 
+            painter.drawEllipse(QPointF(p.x, p.y), p.size, p.size)
 
     def initUI(self):
-        self.setWindowTitle("InstaAD - Welcome")
-        self.setGeometry(400, 400, 600, 500)
+        self.setWindowTitle("InstaAD | AI Marketing Evolution")
+        self.setMinimumSize(1200, 800)
 
-        # רקע עם גרדיאנט מודרני
-        self.setStyleSheet("""
-            WelcomeScreen {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:1,
-                    stop:0 #667eea,
-                    stop:1 #764ba2
-                );
-            }
-        """)
+        main_h_layout = QHBoxLayout(self)
+        main_h_layout.setContentsMargins(0, 0, 0, 0)
+        main_h_layout.setSpacing(0)
 
-        # Layout ראשי
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(50, 40, 50, 40)
-        main_layout.setSpacing(0)  # מאפס את הרווחים האוטומטיים
-        main_layout.setAlignment(Qt.AlignCenter)
-
-        # כרטיס מרכזי לבן
-        card_widget = QWidget()
-        card_widget.setObjectName("card")
-        card_widget.setStyleSheet("""
-            QWidget#card {
-                background-color: white;
-                border-radius: 25px;
-            }
-        """)
+        # --- צד שמאל: הויז'ואל והלוגו (ללא שינוי) ---
+        left_side = QFrame()
+        left_side.setStyleSheet("background: transparent;")
+        left_layout = QVBoxLayout(left_side)
+        left_layout.setAlignment(Qt.AlignCenter)
         
-        # צל לכרטיס
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(40)
-        shadow.setXOffset(0)
-        shadow.setYOffset(15)
-        shadow.setColor(QColor(0, 0, 0, 100))
-        card_widget.setGraphicsEffect(shadow)
-        
-        # Layout של הכרטיס
-        card_layout = QVBoxLayout()
-        card_layout.setContentsMargins(50, 40, 50, 40)
-        card_layout.setSpacing(15)  # רווח קטן יותר בין האלמנטים
-        card_layout.setAlignment(Qt.AlignCenter)
-
-        # Title
-        self.title = QLabel("Welcome to InstaAD")
-        self.title.setFont(QFont("Segoe UI", 32, QFont.Bold))
-        self.title.setAlignment(Qt.AlignCenter)
-        self.title.setStyleSheet("color: #2c3e50; background: transparent;")
-        self.title.setWordWrap(True)
-        card_layout.addWidget(self.title)
-
-        # Subtitle
-        subtitle = QLabel("Your Advertising Solution")
-        subtitle.setFont(QFont("Segoe UI", 5))
-        subtitle.setAlignment(Qt.AlignCenter)
-        subtitle.setStyleSheet("color: #7f8c8d; background: transparent;")
-        card_layout.addWidget(subtitle)
-
-     # Logo
         self.logo_label = QLabel()
-
-        # נתיב תקין לתמונה מתוך הקובץ הנוכחי
         base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "images"))
         image_path = os.path.join(base_path, "InstaADlogo.png")
-
-        print("IMAGE PATH:", image_path)
-        print("EXISTS:", os.path.exists(image_path))
-
         pixmap = QPixmap(image_path)
-        if pixmap.isNull():
-            print("ERROR: Could not load image!")
+        if not pixmap.isNull():
+            pixmap = pixmap.scaled(600, 600, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.logo_label.setPixmap(pixmap)
+        
+        logo_glow = QGraphicsDropShadowEffect()
+        logo_glow.setBlurRadius(120)
+        logo_glow.setColor(QColor(0, 242, 254, 100))
+        self.logo_label.setGraphicsEffect(logo_glow)
+        
+        left_layout.addWidget(self.logo_label)
+        
+        brand_title = QLabel("Advertisement AI Generator")
+        brand_title.setFont(QFont("Orbitron", 50, QFont.Bold)) 
+        brand_title.setStyleSheet("color: white; margin-top: 20px; background: transparent;")
+        left_layout.addWidget(brand_title, alignment=Qt.AlignCenter)
 
-        pixmap = pixmap.scaled(250, 250, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.logo_label.setPixmap(pixmap)
-        self.logo_label.setAlignment(Qt.AlignCenter)
-        self.logo_label.setStyleSheet("background: transparent;")
-        card_layout.addWidget(self.logo_label)
+        # --- צד ימין: ממשק המשתמש (מעודכן למרכז) ---
+        right_side = QFrame()
+        right_side.setFixedWidth(500)
+        right_side.setStyleSheet("""
+            QFrame {
+                background-color: rgba(255, 255, 255, 0.05);
+                border-left: 1px solid rgba(255, 255, 255, 0.1);
+            }
+        """)
+        
+        right_layout = QVBoxLayout(right_side)
+        right_layout.setContentsMargins(60, 0, 60, 0) 
+        right_layout.setSpacing(15)
 
-        # Login Button
-        self.login_button = QPushButton("Login to Your Account")
-        self.login_button.setFont(QFont("Segoe UI", 14, QFont.Bold))
-        self.login_button.setMinimumHeight(55)
+        # טקסט כניסה
+        welcome_text = QLabel("Start Creating.")
+        welcome_text.setFont(QFont("Segoe UI", 32, QFont.Bold))
+        welcome_text.setStyleSheet("color: white; border: none; background: transparent;")
+        
+        desc_text = QLabel("The world's most advanced AI ad generation platform.")
+        desc_text.setWordWrap(True)
+        desc_text.setFont(QFont("Segoe UI", 12))
+        desc_text.setStyleSheet("color: #a0aec0; border: none; background: transparent; margin-bottom: 25px;")
+
+        # כפתור Login הפרימיום
+        self.login_button = QPushButton("LOGIN TO DASHBOARD")
+        self.login_button.setMinimumHeight(65)
         self.login_button.setCursor(Qt.PointingHandCursor)
         self.login_button.clicked.connect(self.go_to_Login)
         self.login_button.setStyleSheet("""
             QPushButton {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #667eea,
-                    stop:1 #764ba2
-                );
-                color: white;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #00f2fe, stop:1 #4facfe);
+                color: #000;
+                font-weight: 800;
+                font-size: 14px;
                 border-radius: 12px;
-                border: none;
-                font-weight: bold;
+                letter-spacing: 1px;
             }
             QPushButton:hover {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #5568d3,
-                    stop:1 #6a3f8f
-                );
-            }
-            QPushButton:pressed {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #4e5dc8,
-                    stop:1 #5d3782
-                );
+                background: white;
+                margin-top: -2px;
             }
         """)
-        
-        # צל לכפתור Login
-        login_shadow = QGraphicsDropShadowEffect()
-        login_shadow.setBlurRadius(20)
-        login_shadow.setXOffset(0)
-        login_shadow.setYOffset(5)
-        login_shadow.setColor(QColor(102, 126, 234, 120))
-        self.login_button.setGraphicsEffect(login_shadow)
-        
-        card_layout.addWidget(self.login_button)
 
-        # Register Button
-        self.register_button = QPushButton("Create New Account")
-        self.register_button.setFont(QFont("Segoe UI", 13, QFont.Bold))
-        self.register_button.setMinimumHeight(55)
+        # כפתור Create Account החדש
+        self.register_button = QPushButton("New here? Create account")
+        self.register_button.setMinimumHeight(50)
         self.register_button.setCursor(Qt.PointingHandCursor)
         self.register_button.clicked.connect(self.go_to_Register)
         self.register_button.setStyleSheet("""
             QPushButton {
-                background-color: white;
-                color: #667eea;
-                border: 2px solid #667eea;
-                border-radius: 12px;
-                font-weight: bold;
+                background: transparent;
+                color: #94a3b8;
+                font-size: 14px;
+                border: none;
+                text-decoration: underline;
             }
             QPushButton:hover {
-                background-color: #f0f3ff;
-                border: 2px solid #5568d3;
-                color: #5568d3;
-            }
-            QPushButton:pressed {
-                background-color: #e0e7ff;
+                color: #00f2fe;
             }
         """)
-        card_layout.addWidget(self.register_button)
 
-        card_widget.setLayout(card_layout)
-        main_layout.addWidget(card_widget)
+        # --- המרכוז החדש ---
+        right_layout.addStretch(1) # דוחף מלמעלה
+        right_layout.addWidget(welcome_text)
+        right_layout.addWidget(desc_text)
+        right_layout.addSpacing(10)
+        right_layout.addWidget(self.login_button)
+        right_layout.addWidget(self.register_button)
+        right_layout.addStretch(1) # דוחף מלמטה - התוצאה: הכל באמצע!
 
-        self.setLayout(main_layout)
+        main_h_layout.addWidget(left_side, 1)
+        main_h_layout.addWidget(right_side)
 
     def go_to_Login(self):
         self.parent.setCurrentWidget(self.parent.login_screen)

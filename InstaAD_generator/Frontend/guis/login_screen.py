@@ -1,182 +1,193 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QMessageBox, QGraphicsDropShadowEffect
-from PyQt5.QtGui import QFont, QColor
-from PyQt5.QtCore import Qt
+import sys
+import random
+import os
+import math
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QMessageBox, QGraphicsDropShadowEffect, QFrame
+from PyQt5.QtGui import QFont, QPixmap, QColor, QPainter, QLinearGradient, QBrush, QPen
+from PyQt5.QtCore import Qt, QTimer, QPointF
 from Backend.logic.login_logic import login_user
 from Backend.logic.login_logic import logout_user_request
+
+# מחלקת החלקיקים לרקע
+class Particle:
+    def __init__(self, width, height):
+        self.x = random.random() * width
+        self.y = random.random() * height
+        self.vx = (random.random() - 0.5) * 0.5
+        self.vy = (random.random() - 0.5) * 0.5
+        self.size = random.uniform(1, 3)
+        self.alpha = random.randint(50, 150)
+
+    def move(self, width, height):
+        self.x += self.vx
+        self.y += self.vy
+        if self.x < 0 or self.x > width: self.vx *= -1
+        if self.y < 0 or self.y > height: self.vy *= -1
 
 class LoginScreen(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
+        self.particles = [Particle(1200, 800) for _ in range(60)]
         self.initUI()
-    
+        
+        self.gradient_offset = 0
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_frame)
+        self.timer.start(30)
+
+    def update_frame(self):
+        self.gradient_offset += 0.005
+        if self.gradient_offset > 1: self.gradient_offset = 0
+        for p in self.particles:
+            p.move(self.width(), self.height())
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        # הרקע האנימטיבי שאהבנו
+        grad = QLinearGradient(0, 0, self.width(), self.height())
+        grad.setColorAt(0, QColor(15, 12, 41))   
+        grad.setColorAt(0.5 + (0.1 * math.sin(self.gradient_offset * math.pi * 2)), QColor(48, 43, 99)) 
+        grad.setColorAt(1, QColor(36, 36, 62))   
+        painter.fillRect(self.rect(), grad)
+        
+        painter.setPen(Qt.NoPen)
+        for p in self.particles:
+            painter.setBrush(QColor(0, 242, 254, p.alpha)) 
+            painter.drawEllipse(QPointF(p.x, p.y), p.size, p.size)
+
     def initUI(self):
-        self.setWindowTitle("InstaAD - Login")
-        self.setGeometry(400, 400, 600, 450)
+        self.setWindowTitle("InstaAD | Login")
+        self.setMinimumSize(1200, 800)
 
-        # רקע גרדיאנט אחיד
-        self.setStyleSheet("""
-            LoginScreen {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:1,
-                    stop:0 #667eea,
-                    stop:1 #764ba2
-                );
+        # Layout ראשי - ממרכז את הכל
+        main_layout = QVBoxLayout(self)
+        main_layout.setAlignment(Qt.AlignCenter)
+
+        # כרטיס ה-Login (זכוכית חלבית)
+        self.card = QFrame()
+        self.card.setFixedWidth(450)
+        self.card.setStyleSheet("""
+            QFrame {
+                background-color: rgba(255, 255, 255, 0.07);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 30px;
             }
         """)
+        
+        card_layout = QVBoxLayout(self.card)
+        card_layout.setContentsMargins(50, 50, 50, 50)
+        card_layout.setSpacing(15)
 
-        main_layout = QVBoxLayout()
-        main_layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
-        main_layout.setContentsMargins(40, 40, 40, 40)
-        main_layout.setSpacing(20)
-
-        # כרטיס לבן למרכז
-        card_widget = QWidget()
-        card_widget.setStyleSheet("""
-            background-color: white;
-            border-radius: 20px;
-        """)
-        card_layout = QVBoxLayout()
-        card_layout.setContentsMargins(40, 30, 40, 30)
-        card_layout.setSpacing(20)
-        card_layout.setAlignment(Qt.AlignCenter)
-
-        # כפתור Back
-        self.back_button = QPushButton("Back")
-        self.back_button.setFont(QFont("Segoe UI", 12, QFont.Bold))
-        self.back_button.setCursor(Qt.PointingHandCursor)
-        self.back_button.clicked.connect(self.go_back)
-        self.back_button.setStyleSheet("""
-            QPushButton {
-                background: #e74c3c;
-                color: white;
-                border-radius: 10px;
-                padding: 6px 12px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background: #c0392b;
-            }
-        """)
-        card_layout.addWidget(self.back_button, alignment=Qt.AlignLeft)
-
-        # כותרת
-        title_label = QLabel("Login to InstaAD")
-        title_label.setFont(QFont("Segoe UI", 26, QFont.Bold))
-        title_label.setStyleSheet("color: #2c3e50;")
+        # כותרת הכרטיס
+        title_label = QLabel("Welcome Back")
+        title_label.setFont(QFont("Segoe UI", 30, QFont.Bold))
+        title_label.setStyleSheet("color: white; background: transparent; border:none;")
         title_label.setAlignment(Qt.AlignCenter)
-        card_layout.addWidget(title_label)
 
-        # שדות Username ו-Password
-        self.username_input = QLineEdit()
-        self.username_input.setPlaceholderText("Enter username...")
-        self.username_input.setFont(QFont("Segoe UI", 14))
-        self.username_input.setFixedWidth(300)
-        self.username_input.setMinimumHeight(40)
-        self.username_input.setAlignment(Qt.AlignCenter)
-        self.username_input.setStyleSheet("""
+        subtitle = QLabel("Please enter your details")
+        subtitle.setStyleSheet("color: #a0aec0; font-size: 14px; background: transparent; margin-bottom: 20px; border:none;")
+        subtitle.setAlignment(Qt.AlignCenter)
+
+        # עיצוב השדות (Inputs)
+        input_style = """
             QLineEdit {
-                border: 2px solid #667eea;
-                border-radius: 10px;
-                padding: 6px 10px;
+                background-color: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+                padding: 15px;
+                color: white;
+                font-size: 14px;
             }
             QLineEdit:focus {
-                border: 2px solid #5568d3;
+                border: 1px solid #00f2fe;
+                background-color: rgba(255, 255, 255, 0.12);
             }
-        """)
+        """
+
+        self.username_input = QLineEdit()
+        self.username_input.setPlaceholderText("Username")
+        self.username_input.setStyleSheet(input_style)
+        self.username_input.setMinimumHeight(55)
 
         self.password_input = QLineEdit()
         self.password_input.setEchoMode(QLineEdit.Password)
-        self.password_input.setPlaceholderText("Enter password...")
-        self.password_input.setFont(QFont("Segoe UI", 14))
-        self.password_input.setFixedWidth(300)
-        self.password_input.setMinimumHeight(40)
-        self.password_input.setAlignment(Qt.AlignCenter)
-        self.password_input.setStyleSheet("""
-            QLineEdit {
-                border: 2px solid #667eea;
-                border-radius: 10px;
-                padding: 6px 10px;
-            }
-            QLineEdit:focus {
-                border: 2px solid #5568d3;
-            }
-        """)
+        self.password_input.setPlaceholderText("Password")
+        self.password_input.setStyleSheet(input_style)
+        self.password_input.setMinimumHeight(55)
 
-        card_layout.addWidget(self.username_input, alignment=Qt.AlignCenter)
-        card_layout.addWidget(self.password_input, alignment=Qt.AlignCenter)
-
-        # Login button
-        self.log_button = QPushButton("Login")
-        self.log_button.setFont(QFont("Segoe UI", 16, QFont.Bold))
-        self.log_button.setMinimumHeight(50)
+        # כפתור Login המודרני
+        self.log_button = QPushButton("LOG IN")
+        self.log_button.setMinimumHeight(60)
         self.log_button.setCursor(Qt.PointingHandCursor)
         self.log_button.clicked.connect(self.try_login)
         self.log_button.setStyleSheet("""
             QPushButton {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #667eea,
-                    stop:1 #764ba2
-                );
-                color: white;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #00f2fe, stop:1 #4facfe);
+                color: #000;
+                font-weight: 800;
+                font-size: 14px;
                 border-radius: 12px;
-                border: none;
-                font-weight: bold;
+                margin-top: 15px;
             }
             QPushButton:hover {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #5568d3,
-                    stop:1 #6a3f8f
-                );
-            }
-            QPushButton:pressed {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #4e5dc8,
-                    stop:1 #5d3782
-                );
+                background: white;
             }
         """)
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)
-        shadow.setXOffset(0)
-        shadow.setYOffset(5)
-        shadow.setColor(QColor(102, 126, 234, 150))
-        self.log_button.setGraphicsEffect(shadow)
+
+        # כפתור חזרה (Back)
+        self.back_button = QPushButton("← Back to Welcome")
+        self.back_button.setCursor(Qt.PointingHandCursor)
+        self.back_button.clicked.connect(self.go_back)
+        self.back_button.setStyleSheet("""
+            QPushButton {
+                color: #a0aec0;
+                background: transparent;
+                font-size: 13px;
+                border: none;
+                margin-top: 10px;
+            }
+            QPushButton:hover { color: white; }
+        """)
+
+        # הוספת אלמנטים לכרטיס
+        card_layout.addWidget(title_label)
+        card_layout.addWidget(subtitle)
+        card_layout.addWidget(self.username_input)
+        card_layout.addWidget(self.password_input)
         card_layout.addWidget(self.log_button)
+        card_layout.addWidget(self.back_button)
 
-        card_widget.setLayout(card_layout)
-        main_layout.addWidget(card_widget, alignment=Qt.AlignCenter)
-        self.setLayout(main_layout)
+        # אפקט צל לכרטיס ש"יקפוץ" מהרקע
+        card_shadow = QGraphicsDropShadowEffect()
+        card_shadow.setBlurRadius(80)
+        card_shadow.setColor(QColor(0, 0, 0, 180))
+        self.card.setGraphicsEffect(card_shadow)
 
+        main_layout.addWidget(self.card)
+
+    # --- פונקציות הלוגיקה שלך (ללא שינוי) ---
     def go_back(self):
         self.parent.setCurrentWidget(self.parent.welcome_screen)
 
     def try_login(self):
         username = self.username_input.text()
         password = self.password_input.text()
-
         result = login_user(username, password)
-
         msg = QMessageBox()
         if result["success"]:
             msg.setText(result["message"])
             msg.setIcon(QMessageBox.Information)
             msg.exec_()
-
-            # יצירת מסך בית עם שם המשתמש
             from guis.userHome_screen import UserHomeScreen
             user_home = UserHomeScreen(self.parent, username)
             self.parent.user_home_screen = user_home
-            # Update generate_screen to use this user_home instance
             self.parent.generate_screen.user_home_screen = user_home
-            #self.parent.user_home_screen = user_home
             self.parent.addWidget(user_home)
-      
             self.parent.setCurrentWidget(user_home)
-
         else:
             if result["message"] == "User already logged in.":
                 msg = QMessageBox()
@@ -184,24 +195,16 @@ class LoginScreen(QWidget):
                 msg.setText("User already logged in.\nWould you like to sign out now?")
                 msg.setIcon(QMessageBox.Question)
                 msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-
                 choice = msg.exec_()
-
                 if choice == QMessageBox.Yes:
                     logout_user_request(username)
-
                     msg = QMessageBox()
                     msg.setWindowTitle("Logged Out")
                     msg.setText("You have been logged out. Please log in again.")
                     msg.setIcon(QMessageBox.Information)
                     msg.exec_()
-
                     self.parent.setCurrentWidget(self.parent.welcome_screen)
-                    return
-                
-                else:
-                    return
-            
+                else: return
             else:
                 msg = QMessageBox()
                 msg.setText("Login failed: " + result["message"])

@@ -1,133 +1,168 @@
-# screens/user_home_screen.py
-
-from PyQt5.QtWidgets import QWidget, QMessageBox ,QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QGraphicsDropShadowEffect
-from PyQt5.QtGui import QFont, QColor
-from PyQt5.QtCore import Qt
+import sys
+import random
+import os
+import math
+from PyQt5.QtWidgets import QWidget, QMessageBox, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QGraphicsDropShadowEffect, QFrame
+from PyQt5.QtGui import QFont, QColor, QPainter, QLinearGradient, QBrush, QPen
+from PyQt5.QtCore import Qt, QTimer, QPointF
 from Backend.logic.login_logic import logout_user_request
 from Backend.logic.generate_ad_logic import handle_generate
 from guis.ad_preview_screen import AdPreviewScreen
+
+# מחלקת חלקיקים
+class Particle:
+    def __init__(self, width, height):
+        self.x = random.random() * width
+        self.y = random.random() * height
+        self.vx = (random.random() - 0.5) * 0.5
+        self.vy = (random.random() - 0.5) * 0.5
+        self.size = random.uniform(1, 3)
+        self.alpha = random.randint(50, 150)
+
+    def move(self, width, height):
+        self.x += self.vx
+        self.y += self.vy
+        if self.x < 0 or self.x > width: self.vx *= -1
+        if self.y < 0 or self.y > height: self.vy *= -1
 
 class UserHomeScreen(QWidget):
     def __init__(self, parent, username):
         super().__init__()
         self.parent = parent
         self.username = username
+        self.particles = [Particle(1200, 800) for _ in range(60)]
         self.initUI()
-    
+        
+        self.gradient_offset = 0
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_frame)
+        self.timer.start(30)
+
+    def update_frame(self):
+        self.gradient_offset += 0.005
+        if self.gradient_offset > 1: self.gradient_offset = 0
+        for p in self.particles:
+            p.move(self.width(), self.height())
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        grad = QLinearGradient(0, 0, self.width(), self.height())
+        grad.setColorAt(0, QColor(15, 12, 41))   
+        grad.setColorAt(0.5 + (0.1 * math.sin(self.gradient_offset * math.pi * 2)), QColor(48, 43, 99)) 
+        grad.setColorAt(1, QColor(36, 36, 62))   
+        painter.fillRect(self.rect(), grad)
+        painter.setPen(Qt.NoPen)
+        for p in self.particles:
+            painter.setBrush(QColor(0, 242, 254, p.alpha)) 
+            painter.drawEllipse(QPointF(p.x, p.y), p.size, p.size)
+
     def initUI(self):
-        self.setWindowTitle("InstaAD - Home")
-        self.setGeometry(400, 400, 600, 500)
+        self.setWindowTitle("InstaAD | Dashboard")
+        self.setMinimumSize(1200, 800)
 
-        # רקע עם גרדיאנט מודרני
-        self.setStyleSheet("""
-            UserHomeScreen {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:1,
-                    stop:0 #667eea,
-                    stop:1 #764ba2
-                );
-            }
-        """)
-
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(50, 40, 50, 40)
-        main_layout.setSpacing(20)
+        # Layout ראשי שממרכז את הכרטיס
+        main_layout = QVBoxLayout(self)
         main_layout.setAlignment(Qt.AlignCenter)
 
-        # כרטיס לבן למרכז המסך
-        card_widget = QWidget()
-        card_widget.setStyleSheet("""
-            background-color: white;
-            border-radius: 20px;
+        # כרטיס הזכוכית שאהבת
+        self.card = QFrame()
+        self.card.setFixedWidth(650)
+        # שים לב: הורדתי setFixedHeight כדי שהכרטיס יגדל אם צריך והטקסט לא ייחתך
+        self.card.setStyleSheet("""
+            QFrame {
+                background-color: rgba(255, 255, 255, 0.07);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 40px;
+            }
         """)
-        card_layout = QVBoxLayout()
-        card_layout.setContentsMargins(40, 30, 40, 30)
+        
+        card_layout = QVBoxLayout(self.card)
+        card_layout.setContentsMargins(50, 50, 50, 50)
         card_layout.setSpacing(20)
-        card_layout.setAlignment(Qt.AlignCenter)
 
-        # כותרת בולטת
-        welcome_label = QLabel(f"Welcome, {self.username}!")
-        welcome_label.setFont(QFont("Segoe UI", 24, QFont.Bold))
-        welcome_label.setStyleSheet("color: #2c3e50;")  # צבע בולט, כהה
-        welcome_label.setAlignment(Qt.AlignCenter)
-        card_layout.addWidget(welcome_label)
+        # --- המרכוז הפנימי שמונע חיתוך ---
+        card_layout.addStretch() 
 
-        # כפתור Logout בחלק העליון של הכרטיס
-        self.logout_button = QPushButton("Logout")
-        self.logout_button.setFont(QFont("Segoe UI", 12, QFont.Bold))
-        self.logout_button.setCursor(Qt.PointingHandCursor)
-        self.logout_button.setStyleSheet("""
-            QPushButton {
-                background-color: #e74c3c;
-                color: white;
-                border-radius: 12px;
-                padding: 6px 12px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #c0392b;
-            }
-        """)
-        self.logout_button.clicked.connect(self.logout_clicked)
-        card_layout.addWidget(self.logout_button, alignment=Qt.AlignRight)
+        # כותרת
+        self.welcome_label = QLabel(f"Welcome, {self.username}!")
+        self.welcome_label.setFont(QFont("Segoe UI", 32, QFont.Bold))
+        self.welcome_label.setStyleSheet("color: white; background: transparent; border: none;")
+        self.welcome_label.setAlignment(Qt.AlignCenter)
+        self.welcome_label.setWordWrap(True) # מאפשר לטקסט לרדת שורה אם השם ארוך
+        card_layout.addWidget(self.welcome_label)
 
-        # כפתורים מרכזיים
-        buttons = [
-            ("Start New Ad", self.start_new_ad),
-            ("Generate Recommended Advertisement", self.generate_recommended),
-            ("Advertisement History", self.advertisement_history)
+        subtitle = QLabel("Choose your advertising action")
+        subtitle.setFont(QFont("Segoe UI", 14)) # הגדלתי טיפה שיהיה ברור
+        subtitle.setStyleSheet("color: #a0aec0; background: transparent; border: none; padding: 5px;")
+        subtitle.setAlignment(Qt.AlignCenter)
+        subtitle.setWordWrap(True) # זה ימנע את החיתוך!
+        card_layout.addWidget(subtitle)
+
+        card_layout.addSpacing(20)
+
+        # כפתורים
+        actions = [
+            ("✨ Start New Ad", self.start_new_ad),
+            ("🤖 Recommended Ad", self.generate_recommended),
+            ("📂 Ad History", self.advertisement_history)
         ]
 
-        for text, func in buttons:
+        for text, func in actions:
             btn = QPushButton(text)
             btn.setFont(QFont("Segoe UI", 14, QFont.Bold))
-            btn.setMinimumHeight(50)
+            btn.setMinimumHeight(65)
             btn.setCursor(Qt.PointingHandCursor)
             btn.clicked.connect(func)
-            btn.setStyleSheet("""
-                QPushButton {
-                    background: qlineargradient(
-                        x1:0, y1:0, x2:1, y2:0,
-                        stop:0 #667eea,
-                        stop:1 #764ba2
-                    );
-                    color: white;
-                    border-radius: 12px;
-                    border: none;
-                    font-weight: bold;
-                }
-                QPushButton:hover {
-                    background: qlineargradient(
-                        x1:0, y1:0, x2:1, y2:0,
-                        stop:0 #5568d3,
-                        stop:1 #6a3f8f
-                    );
-                }
-                QPushButton:pressed {
-                    background: qlineargradient(
-                        x1:0, y1:0, x2:1, y2:0,
-                        stop:0 #4e5dc8,
-                        stop:1 #5d3782
-                    );
-                }
-            """)
-            # צל לכפתור
-            shadow = QGraphicsDropShadowEffect()
-            shadow.setBlurRadius(15)
-            shadow.setXOffset(0)
-            shadow.setYOffset(5)
-            shadow.setColor(QColor(102, 126, 234, 120))
-            btn.setGraphicsEffect(shadow)
+            
+            if "Start" in text:
+                style = """
+                    QPushButton {
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #00f2fe, stop:1 #4facfe);
+                        color: #0d1117; border-radius: 15px; font-weight: 900;
+                    }
+                    QPushButton:hover { background: white; }
+                """
+            else:
+                style = """
+                    QPushButton {
+                        background: rgba(255, 255, 255, 0.08);
+                        color: white; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 15px;
+                    }
+                    QPushButton:hover { background: rgba(255, 255, 255, 0.15); border: 1px solid white; }
+                """
+            btn.setStyleSheet(style)
             card_layout.addWidget(btn)
 
-        card_widget.setLayout(card_layout)
-        main_layout.addWidget(card_widget, alignment=Qt.AlignCenter)
-        self.setLayout(main_layout)
+        # כפתור Logout
+        self.logout_button = QPushButton("Logout")
+        self.logout_button.setCursor(Qt.PointingHandCursor)
+        self.logout_button.clicked.connect(self.logout_clicked)
+        self.logout_button.setStyleSheet("""
+            QPushButton {
+                color: #e74c3c; background: transparent; font-size: 14px; 
+                font-weight: bold; border: none; margin-top: 10px;
+            }
+            QPushButton:hover { color: #ff5e57; text-decoration: underline; }
+        """)
+        card_layout.addWidget(self.logout_button, alignment=Qt.AlignCenter)
+
+        card_layout.addStretch() # סוגר את המרכוז מלמטה
+
+        # צל
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(80)
+        shadow.setColor(QColor(0, 0, 0, 200))
+        self.card.setGraphicsEffect(shadow)
+
+        main_layout.addWidget(self.card)
 
     def start_new_ad(self):
         self.parent.generate_screen.username = self.username
         self.parent.setCurrentWidget(self.parent.generate_screen)
 
+<<<<<<< HEAD
     def generate_recommended(self):
         result = handle_generate(
             prompt=None,
@@ -154,6 +189,9 @@ class UserHomeScreen(QWidget):
             self.preview_window.close()
             self.preview_window = None
         self.show()
+=======
+    def generate_recommended(self): pass
+>>>>>>> 243664c7077423e8eac6cc4e06247ff3d9b3a26e
 
     def advertisement_history(self):
         self.parent.ad_history_screen.load_ads(self.username)
@@ -161,17 +199,9 @@ class UserHomeScreen(QWidget):
 
     def logout_clicked(self):
         result = logout_user_request(self.username)
-
         if result["success"]:
-            msg = QMessageBox()
+            msg = QMessageBox(self)
             msg.setIcon(QMessageBox.Information)
-            msg.setWindowTitle("Logout")
-            msg.setText("You have been logged out successfully!")
-            msg.setStandardButtons(QMessageBox.Ok)
-
-            msg.exec_()  
-
-            #self.parent.user_home_screen = None
-            #self.parent.current_user = None
-
+            msg.setText("Logged out successfully!")
+            msg.exec_()
             self.parent.setCurrentWidget(self.parent.welcome_screen)
