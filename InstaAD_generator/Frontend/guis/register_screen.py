@@ -1,179 +1,200 @@
-from Backend.logic.register_logic import register_user, validate_inputs
+import sys
+import random
+import os
+import math
 from PyQt5.QtWidgets import (
-    QWidget, QLabel, QLineEdit, QVBoxLayout, QPushButton, 
-    QComboBox, QDateEdit, QGraphicsDropShadowEffect, QMessageBox
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, 
+    QMessageBox, QGraphicsDropShadowEffect, QFrame, QComboBox, QDateEdit
 )
-from PyQt5.QtGui import QFont, QColor
-from PyQt5.QtCore import Qt, QDate
+from PyQt5.QtGui import QFont, QPixmap, QColor, QPainter, QLinearGradient, QBrush, QPen
+from PyQt5.QtCore import Qt, QTimer, QPointF, QDate
+from Backend.logic.register_logic import register_user
+
+# מחלקת חלקיקים (להמשכיות העיצוב)
+class Particle:
+    def __init__(self, width, height):
+        self.x = random.random() * width
+        self.y = random.random() * height
+        self.vx = (random.random() - 0.5) * 0.5
+        self.vy = (random.random() - 0.5) * 0.5
+        self.size = random.uniform(1, 3)
+        self.alpha = random.randint(50, 150)
+
+    def move(self, width, height):
+        self.x += self.vx
+        self.y += self.vy
+        if self.x < 0 or self.x > width: self.vx *= -1
+        if self.y < 0 or self.y > height: self.vy *= -1
 
 class RegisterScreen(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
+        self.particles = [Particle(1200, 800) for _ in range(60)]
         self.initUI()
+        
+        self.gradient_offset = 0
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_frame)
+        self.timer.start(30)
+
+    def update_frame(self):
+        self.gradient_offset += 0.005
+        if self.gradient_offset > 1: self.gradient_offset = 0
+        for p in self.particles:
+            p.move(self.width(), self.height())
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        grad = QLinearGradient(0, 0, self.width(), self.height())
+        grad.setColorAt(0, QColor(15, 12, 41))   
+        grad.setColorAt(0.5 + (0.1 * math.sin(self.gradient_offset * math.pi * 2)), QColor(48, 43, 99)) 
+        grad.setColorAt(1, QColor(36, 36, 62))   
+        painter.fillRect(self.rect(), grad)
+        painter.setPen(Qt.NoPen)
+        for p in self.particles:
+            painter.setBrush(QColor(0, 242, 254, p.alpha)) 
+            painter.drawEllipse(QPointF(p.x, p.y), p.size, p.size)
 
     def initUI(self):
-        self.setWindowTitle("InstaAD - Register")
-        self.setGeometry(400, 400, 550, 680)
+        self.setWindowTitle("InstaAD | Register")
+        self.setMinimumSize(1200, 850)
 
-        # רקע גרדיאנט אחיד
-        self.setStyleSheet("""
-            RegisterScreen {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:1,
-                    stop:0 #667eea,
-                    stop:1 #764ba2
-                );
+        main_layout = QVBoxLayout(self)
+        main_layout.setAlignment(Qt.AlignCenter)
+
+        self.card = QFrame()
+        self.card.setFixedWidth(500)
+        self.card.setStyleSheet("""
+            QFrame {
+                background-color: rgba(255, 255, 255, 0.07);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 30px;
             }
         """)
+        
+        # צמצום ה-Spacing של ה-Layout הכללי
+        card_layout = QVBoxLayout(self.card)
+        card_layout.setContentsMargins(50, 40, 50, 40)
+        card_layout.setSpacing(5) # רווח קטן מאוד בין האלמנטים
 
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(40, 30, 40, 30)
-        main_layout.setSpacing(20)
-        main_layout.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
-
-        # כרטיס לבן עם צל
-        card_widget = QWidget()
-        card_widget.setStyleSheet("""
-            background-color: white;
-            border-radius: 20px;
-        """)
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(30)
-        shadow.setXOffset(0)
-        shadow.setYOffset(10)
-        shadow.setColor(QColor(0,0,0,80))
-        card_widget.setGraphicsEffect(shadow)
-
-        card_layout = QVBoxLayout()
-        card_layout.setContentsMargins(40, 40, 40, 40)
-        card_layout.setSpacing(18)
-
-        # כותרת
-        title = QLabel("Create Your Account")
-        title.setFont(QFont("Segoe UI", 24, QFont.Bold))
+        # כותרות
+        title = QLabel("Join the Future")
+        title.setFont(QFont("Segoe UI", 32, QFont.Bold))
+        title.setStyleSheet("color: white; border: none; background: transparent;")
         title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet("color: #2c3e50;")
-        title.setWordWrap(True)
         card_layout.addWidget(title)
 
-        subtitle = QLabel("Join InstaAD today")
-        subtitle.setFont(QFont("Segoe UI", 12))
+        subtitle = QLabel("Create your InstaAD account")
+        subtitle.setStyleSheet("color: #a0aec0; font-size: 14px; border: none; background: transparent; margin-bottom: 10px;")
         subtitle.setAlignment(Qt.AlignCenter)
-        subtitle.setStyleSheet("color: #7f8c8d;")
         card_layout.addWidget(subtitle)
 
-        # סטייל אחיד לשדות
+        # סטייל לשדות הקלט
         input_style = """
             QLineEdit, QDateEdit, QComboBox {
-                background-color: #f8f9fa;
-                border: 2px solid #e9ecef;
-                border-radius: 10px;
-                padding: 12px 15px;
+                background-color: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+                padding: 12px;
+                color: white;
                 font-size: 14px;
-                color: #2c3e50;
             }
             QLineEdit:focus, QDateEdit:focus, QComboBox:focus {
-                border: 2px solid #667eea;
-                background-color: white;
-            }
-            QLineEdit:hover, QDateEdit:hover, QComboBox:hover {
-                border: 2px solid #b8c5f2;
+                border: 1px solid #00f2fe;
             }
         """
-        label_style = "color: #495057; font-weight: 600; margin-bottom: 5px;"
+        
+        # סטייל ספציפי לכותרות הקטגוריות - מבטל את הריבועים שראית בתמונה
+        category_label_style = """
+            QLabel {
+                color: white; 
+                font-size: 16px; 
+                font-weight: bold; 
+                border: none; 
+                background: transparent; 
+                margin-top: 10px;
+                padding: 0px;
+            }
+        """
 
-        # שדות קלט
-        fields = [
-            ("👤 Username", QLineEdit, "Enter your username"),
-            ("🔒 Password", QLineEdit, "Enter your password", True),
-            ("📅 Birthdate", QDateEdit, None),
-            ("💼 Business Type", QComboBox, ["Self-employed", "Salaried employee"]),
-            ("🏢 Business Field", QLineEdit, "e.g., Cosmetics, Gym, Food")
-        ]
+        # --- שדות ---
+        self.username_input = QLineEdit()
+        self.username_input.setPlaceholderText("👤 Username")
+        self.username_input.setStyleSheet(input_style)
+        self.username_input.setFixedHeight(50)
+        card_layout.addWidget(self.username_input)
 
-        for field in fields:
-            label = QLabel(field[0])
-            label.setFont(QFont("Segoe UI", 11))
-            label.setStyleSheet(label_style)
-            card_layout.addWidget(label)
+        self.password_input = QLineEdit()
+        self.password_input.setEchoMode(QLineEdit.Password)
+        self.password_input.setPlaceholderText("🔒 Password")
+        self.password_input.setStyleSheet(input_style)
+        self.password_input.setFixedHeight(50)
+        card_layout.addWidget(self.password_input)
 
-            if field[1] == QLineEdit:
-                widget = QLineEdit()
-                if len(field) > 3 and field[3]:
-                    widget.setEchoMode(QLineEdit.Password)
-                widget.setPlaceholderText(field[2])
-            elif field[1] == QDateEdit:
-                widget = QDateEdit()
-                widget.setCalendarPopup(True)
-                widget.setDate(QDate.currentDate())
-            elif field[1] == QComboBox:
-                widget = QComboBox()
-                widget.addItems(field[2])
+        # קטגוריית תאריך לידה
+        dob_label = QLabel("📅 Birthdate")
+        dob_label.setStyleSheet(category_label_style)
+        card_layout.addWidget(dob_label)
+        
+        self.birthdate_input = QDateEdit()
+        self.birthdate_input.setCalendarPopup(True)
+        self.birthdate_input.setDate(QDate.currentDate())
+        self.birthdate_input.setStyleSheet(input_style)
+        self.birthdate_input.setFixedHeight(50)
+        card_layout.addWidget(self.birthdate_input)
 
-            widget.setFont(QFont("Segoe UI", 13))
-            widget.setMinimumHeight(45)
-            widget.setStyleSheet(input_style)
-            setattr(self, field[0].split(" ")[-1].lower() + "_input", widget)  # לשמור לשימוש בלוגיקה
-            card_layout.addWidget(widget)
+        # קטגוריית סוג עסק
+        type_label = QLabel("💼 Business Type")
+        type_label.setStyleSheet(category_label_style)
+        card_layout.addWidget(type_label)
+        
+        self.type_input = QComboBox()
+        self.type_input.addItems(["Self-employed", "Salaried employee"])
+        self.type_input.setStyleSheet(input_style)
+        self.type_input.setFixedHeight(50)
+        card_layout.addWidget(self.type_input)
 
-        # Register button
-        register_btn = QPushButton("Create Account")
-        register_btn.setFont(QFont("Segoe UI", 14, QFont.Bold))
-        register_btn.setMinimumHeight(50)
-        register_btn.setCursor(Qt.PointingHandCursor)
-        register_btn.clicked.connect(self.register)
-        register_btn.setStyleSheet("""
+        # שדה תחום עסק
+        self.field_input = QLineEdit()
+        self.field_input.setPlaceholderText("🏢 Business Field (e.g., Food, Gym)")
+        self.field_input.setStyleSheet(input_style)
+        self.field_input.setFixedHeight(50)
+        card_layout.addWidget(self.field_input)
+
+        # כפתור רישום
+        card_layout.addSpacing(20)
+        self.reg_button = QPushButton("CREATE ACCOUNT")
+        self.reg_button.setFixedHeight(60)
+        self.reg_button.setCursor(Qt.PointingHandCursor)
+        self.reg_button.clicked.connect(self.register)
+        self.reg_button.setStyleSheet("""
             QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #667eea, stop:1 #764ba2);
-                color: white;
-                border-radius: 12px;
-                font-weight: bold;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #00f2fe, stop:1 #4facfe);
+                color: #000; font-weight: 800; font-size: 14px; border-radius: 12px;
             }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #5568d3, stop:1 #6a3f8f);
-            }
-            QPushButton:pressed {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #4e5dc8, stop:1 #5d3782);
-            }
+            QPushButton:hover { background: white; }
         """)
-        btn_shadow = QGraphicsDropShadowEffect()
-        btn_shadow.setBlurRadius(15)
-        btn_shadow.setXOffset(0)
-        btn_shadow.setYOffset(5)
-        btn_shadow.setColor(QColor(102, 126, 234, 100))
-        register_btn.setGraphicsEffect(btn_shadow)
-        card_layout.addWidget(register_btn)
+        card_layout.addWidget(self.reg_button)
 
-        # Back Button
-        back_btn = QPushButton("← Back to Login")
-        back_btn.setFont(QFont("Segoe UI", 12))
-        back_btn.setMinimumHeight(45)
-        back_btn.setCursor(Qt.PointingHandCursor)
-        back_btn.clicked.connect(self.back_clicked)
-        back_btn.setStyleSheet("""
-            QPushButton {
-                background-color: transparent;
-                color: #667eea;
-                border: 2px solid #667eea;
-                border-radius: 10px;
-                font-weight: 600;
-            }
-            QPushButton:hover {
-                background-color: #f0f3ff;
-                border: 2px solid #5568d3;
-                color: #5568d3;
-            }
-            QPushButton:pressed {
-                background-color: #e0e7ff;
-            }
-        """)
-        card_layout.addWidget(back_btn)
+        # קישור חזרה
+        self.back_button = QPushButton("← Already have an account? Login")
+        self.back_button.setCursor(Qt.PointingHandCursor)
+        self.back_button.clicked.connect(self.back_clicked)
+        self.back_button.setStyleSheet("color: #94a3b8; background: transparent; font-size: 13px; border: none;")
+        card_layout.addWidget(self.back_button, alignment=Qt.AlignCenter)
 
-        card_widget.setLayout(card_layout)
-        main_layout.addWidget(card_widget)
-        main_layout.addStretch()
-        self.setLayout(main_layout)
+        # זה מה שדוחף הכל למעלה ומונע את הפיזור שראית בתמונה
+        card_layout.addStretch()
+
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(60)
+        shadow.setColor(QColor(0, 0, 0, 150))
+        self.card.setGraphicsEffect(shadow)
+        
+        main_layout.addWidget(self.card)
 
     def register(self):
         username = self.username_input.text()
@@ -181,20 +202,12 @@ class RegisterScreen(QWidget):
         birthdate = self.birthdate_input.date().toString("yyyy-MM-dd")
         business_type = self.type_input.currentText()
         business_field = self.field_input.text()
-
-        success, msg = register_user(username, password, birthdate, business_type, business_field)
-
-        msg_box = QMessageBox()
-        msg_box.setWindowTitle("Registration")
-        if success:
-            msg_box.setIcon(QMessageBox.Information)
-            msg_box.setText(msg)
-            msg_box.exec_()
+        result = register_user(username, password, birthdate, business_type, business_field)
+        if result["success"]:
+            QMessageBox.information(self, "Success", result["message"])
             self.parent.setCurrentWidget(self.parent.welcome_screen)
         else:
-            msg_box.setIcon(QMessageBox.Warning)
-            msg_box.setText(msg)
-            msg_box.exec_()
+            QMessageBox.warning(self, "Error", result["message"])
 
     def back_clicked(self):
         self.parent.setCurrentWidget(self.parent.welcome_screen)

@@ -8,19 +8,27 @@ from guis.login_screen import LoginScreen
 from guis.register_screen import RegisterScreen
 from guis.userHome_screen import UserHomeScreen
 from guis.generate_screen import GenerateScreen
+from guis.ad_history_screen import AdHistoryScreen
 from PyQt5.QtWidgets import QApplication, QStackedWidget
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 #from Backend.api import app as auth_app
 from Backend.endpoints.auth_login import router as login_router
 from Backend.endpoints.auth_register import router as register_router
+from Backend.endpoints.generate_ad import router as generate_ad_router
 from Backend.endpoints.db_init import customers_collection
+from Backend.endpoints.video_status import router as video_status_router
+from Backend.endpoints.save_ad import router as save_ad_router
 
 # FastAPI app instance (required for Uvicorn)
 app = FastAPI()
 
+# Include routers for different endpoints
 app.include_router(login_router)
 app.include_router(register_router)
+app.include_router(generate_ad_router)
+app.include_router(video_status_router)
+app.include_router(save_ad_router)
 
 # Start FastAPI server in a separate thread
 def start_fastapi():
@@ -36,14 +44,15 @@ class MainApp(QStackedWidget):
         self.register_screen = RegisterScreen(self) 
         self.user_home_screen = UserHomeScreen(self, username="")  # username דיפולטיבי
         self.generate_screen = GenerateScreen(self, username="")
+        self.ad_history_screen = AdHistoryScreen(self, username="")
 
         self.addWidget(self.user_home_screen)
         self.addWidget(self.generate_screen)
         self.addWidget(self.welcome_screen)  # stacking it to index 0
         self.addWidget(self.login_screen)    # stacking it to index 1
         self.addWidget(self.register_screen)
+        self.addWidget(self.ad_history_screen)
     
-
         self.setCurrentWidget(self.welcome_screen)  # default screen
 
 if __name__ == "__main__":

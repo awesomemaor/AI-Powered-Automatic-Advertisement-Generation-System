@@ -1,17 +1,20 @@
-# InstaAD - an AI-Powered-Automatic-Advertisement-Generation-System
-# Problem Statement
-Creating effective advertisements is often time-consuming and requires a combination of creativity, marketing knowledge, and design expertise. Many businesses struggle to produce high-quality ads quickly and consistently — leading to high costs and uneven results. 
-# Our Solution
-Our system leverages advanced AI technologies — including machine learning and natural language processing (NLP) — to automatically generate personalized, high-quality video advertisements in a fast and cost-effective manner.
-It streamlines the entire process, reduces manual effort, and ensures that businesses can quickly create content tailored to different audiences.
+# 🎬 InstaAD - AI-Powered Automatic Advertisement Generation
 
-## Tech Stack and updates (to be)
-**Frontend:** Python using the PyQt5 framework (desktop GUI).<br /> 
-**Backend:** FastAPI (RESTful server).<br />
-**Database:** MongoDB with PyMongo.<br /> 
-**Other Feature:** Prototype GUI and modular architecture.<br />
+## ❗ Problem
+Creating high-quality video ads is time-consuming and often requires marketing, design, and creative expertise. Businesses struggle to produce content quickly, consistently, and cost-effectively.
 
-## Project R&D members:
-Daniel Ayash and Maor Siboni.
+## 💡 Our Solution
+InstaAD uses AI to **automatically generate personalized video advertisements**. It streamlines the workflow, reduces manual effort, and allows users to quickly produce content tailored to different audiences. Current features include:
+- 🎥 Video generation from text prompts
+- 💾 Saved ad history with playback
+- 📝 User feedback collection for ad improvement
 
-#### Work in progress – we’re actively developing and improving the system...
+## 🛠 Tech Stack
+- **Frontend:** Python, PyQt5 (desktop GUI)  
+- **Backend:** FastAPI (RESTful API)  
+- **Database:** MongoDB (PyMongo)  
+
+## 👥 Team
+**Daniel Ayash** & **Maor Siboni**
+
+> ⚠️ Work in progress — actively developing and improving the system.
