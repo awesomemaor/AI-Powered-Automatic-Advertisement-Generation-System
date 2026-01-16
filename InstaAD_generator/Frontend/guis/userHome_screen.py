@@ -162,7 +162,7 @@ class UserHomeScreen(QWidget):
         self.parent.generate_screen.username = self.username
         self.parent.setCurrentWidget(self.parent.generate_screen)
 
-<<<<<<< HEAD
+    # recommended ad creation flow
     def generate_recommended(self):
         result = handle_generate(
             prompt=None,
@@ -189,9 +189,6 @@ class UserHomeScreen(QWidget):
             self.preview_window.close()
             self.preview_window = None
         self.show()
-=======
-    def generate_recommended(self): pass
->>>>>>> 243664c7077423e8eac6cc4e06247ff3d9b3a26e
 
     def advertisement_history(self):
         self.parent.ad_history_screen.load_ads(self.username)

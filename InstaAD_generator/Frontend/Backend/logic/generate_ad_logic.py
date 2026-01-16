@@ -7,7 +7,7 @@ import re
 import os
 from Backend.logic.gemini_helper import enhance_prompt_with_gemini
 
-USE_MOCK = False  # for debug purposes
+USE_MOCK = True  # for debug purposes
 KIE_API_KEY = os.getenv("KIE_API_KEY")  
 KIE_CREATE_TASK_URL = "https://api.kie.ai/api/v1/jobs/createTask"
 print("KIE_API_KEY =", os.getenv("KIE_API_KEY"))
@@ -137,6 +137,8 @@ def handle_generate(prompt: str | None, user_id: str, mode="manual"):
 
     searched_keywords, feedback_notes = fetch_user_ad_prefernces(user_id)
 
+    keywords = []
+
     # -------------------------
     # 1. base prompt
     # -------------------------
@@ -184,12 +186,13 @@ def handle_generate(prompt: str | None, user_id: str, mode="manual"):
     # -------------------------
     # 4. keywords + task
     # -------------------------
-    keywords = extract_keywords(final_prompt)
-    requests.post(
-        "http://127.0.0.1:8000/save_keywords",
-        json={"user_id": user_id, "keywords": keywords},
-        timeout=5
-    )
+    if mode == "manual":
+        keywords = extract_keywords(final_prompt)
+        requests.post(
+            "http://127.0.0.1:8000/save_keywords",
+            json={"user_id": user_id, "keywords": keywords},
+            timeout=5
+        )
 
     task_id = create_seedance_video_task(final_prompt)
 

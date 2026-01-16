@@ -199,19 +199,15 @@ class GenerateScreen(QWidget):
         logout_user_request(self.username)
         self.parent.setCurrentWidget(self.parent.welcome_screen)
 
+    # manual ad creation flow
     def on_generate_clicked(self):
-        # ... לוגיקה ללא שינוי ...
         prompt = self.prompt_input.text().strip()
         if not prompt:
             QMessageBox.warning(self, "Error", "Please enter a prompt")
             return
-<<<<<<< HEAD
 
         result = handle_generate(prompt, self.username, mode="manual")
 
-=======
-        result = handle_generate(prompt, self.username)
->>>>>>> 243664c7077423e8eac6cc4e06247ff3d9b3a26e
         if result.get("success"):
             data = result.get("data", {})
             task_id = data.get("task_id")
