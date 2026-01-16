@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import QWidget, QMessageBox ,QVBoxLayout, QLabel, QPushButt
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import Qt
 from Backend.logic.login_logic import logout_user_request
+from Backend.logic.generate_ad_logic import handle_generate
+from guis.ad_preview_screen import AdPreviewScreen
 
 class UserHomeScreen(QWidget):
     def __init__(self, parent, username):
@@ -127,7 +129,31 @@ class UserHomeScreen(QWidget):
         self.parent.setCurrentWidget(self.parent.generate_screen)
 
     def generate_recommended(self):
-        print("Generate Recommended Advertisement clicked")
+        result = handle_generate(
+            prompt=None,
+            user_id=self.username,
+            mode="recommended"
+        )
+
+        if result.get("success"):
+            data = result["data"]
+
+            self.preview_window = AdPreviewScreen(
+                task_id=data["task_id"],
+                keywords=data.get("keywords", []),
+                username=self.username,
+                go_back_callback=self.return_from_preview
+            )
+
+            self.hide()
+            self.preview_window.show()
+    
+    def return_from_preview(self):
+        """נקראת כשהמשתמש לוחץ Try Again"""
+        if self.preview_window:
+            self.preview_window.close()
+            self.preview_window = None
+        self.show()
 
     def advertisement_history(self):
         self.parent.ad_history_screen.load_ads(self.username)

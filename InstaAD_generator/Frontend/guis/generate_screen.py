@@ -169,7 +169,7 @@ class GenerateScreen(QWidget):
             QMessageBox.warning(self, "Error", "Please enter a prompt")
             return
 
-        result = handle_generate(prompt, self.username)
+        result = handle_generate(prompt, self.username, mode="manual")
 
         if result.get("success"):
             data = result.get("data", {})

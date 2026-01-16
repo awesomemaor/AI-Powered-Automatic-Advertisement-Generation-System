@@ -39,3 +39,18 @@ async def save_feedback(req: FeedbackRequest):
         raise HTTPException(status_code=404, detail="User not found")
 
     return {"message": "Feedback saved"}
+
+@router.get("/get_user_preferences/{user_id}")
+async def get_user_preferences(user_id: str):
+    user = customers_collection.find_one(
+        {"username": user_id},
+        {"_id": 0, "searched_keywords": 1, "feedback_notes": 1}
+    )
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {
+        "searched_keywords": user.get("searched_keywords", []),
+        "feedback_notes": user.get("feedback_notes", [])
+    }

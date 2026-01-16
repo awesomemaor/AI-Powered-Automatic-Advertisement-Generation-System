@@ -7,7 +7,7 @@ import re
 import os
 from Backend.logic.gemini_helper import enhance_prompt_with_gemini
 
-USE_MOCK = True  # for debug purposes
+USE_MOCK = False  # for debug purposes
 KIE_API_KEY = os.getenv("KIE_API_KEY")  
 KIE_CREATE_TASK_URL = "https://api.kie.ai/api/v1/jobs/createTask"
 print("KIE_API_KEY =", os.getenv("KIE_API_KEY"))
@@ -71,6 +71,24 @@ def handle_submit_feedback(user_id: str, feedback: str):
             "success": False,
             "message": str(e)
         }
+    
+# ======================
+# Fetch user ad preferences
+# ======================
+def fetch_user_ad_prefernces(user_id: str):
+    response = requests.get(
+        f"http://127.0.0.1:8000/get_user_preferences/{user_id}",
+        timeout=5
+    )
+
+    if response.status_code != 200:
+        return {}, []
+
+    data = response.json()
+    return (
+        data.get("searched_keywords", []),
+        data.get("feedback_notes", [])
+    )
 
 # ======================
 # Create Seedance Task (KIE)
@@ -115,31 +133,66 @@ def create_seedance_video_task(prompt: str):
 # ======================
 # Main entry
 # ======================
-def handle_generate(prompt: str, user_id: str):
-    if len(prompt) < 5:
-        return {
-            "success": False,
-            "message": "Prompt is too short"
-        }
+def handle_generate(prompt: str | None, user_id: str, mode="manual"):
+
+    searched_keywords, feedback_notes = fetch_user_ad_prefernces(user_id)
+
+    # -------------------------
+    # 1. base prompt
+    # -------------------------
+    if mode == "manual":
+        if not prompt or len(prompt) < 5:
+            return {"success": False, "message": "Prompt is too short"}
+        base_prompt = prompt
+
+    else:  # recommended
+        base_prompt = (
+            "Create a short, engaging, professional video advertisement "
+            "suitable for social media platforms."
+        )
+
+    # -------------------------
+    # 2. enrich with user data
+    # -------------------------
+    if mode == "recommended":
+        if searched_keywords:
+            base_prompt += (
+                "\nFocus on themes and concepts related to: "
+                + ", ".join(searched_keywords[-5:])
+            )
+
+        if feedback_notes:
+            base_prompt += (
+                "\nUser preferences and feedback to consider: "
+                + " ".join(feedback_notes[-3:])
+            )
+
+    elif mode == "manual":
+        if feedback_notes:
+            base_prompt += (
+                "\nUser preferences and feedback to consider: "
+                + " ".join(feedback_notes[-3:])
+            )
+
+    # -------------------------
+    # 3. Gemini enhancement
+    # -------------------------
+    print("Enhancing prompt with Gemini...")
+    final_prompt = enhance_prompt_with_gemini(base_prompt) # enhance with Gemini AI (hashuv!!)
+    print("Final prompt:", final_prompt)
     
-    print("Asking Gemini to enhance the prompt...")
-    final_prompt = enhance_prompt_with_gemini(prompt) # enhancing the user prompt (hashuv!!)
-    print("Final Prompt:", final_prompt)
-
-    # 1. keywords
+    # -------------------------
+    # 4. keywords + task
+    # -------------------------
     keywords = extract_keywords(final_prompt)
-
-    # 2. save keywords
     requests.post(
         "http://127.0.0.1:8000/save_keywords",
         json={"user_id": user_id, "keywords": keywords},
         timeout=5
     )
 
-    # 3. create video task
     task_id = create_seedance_video_task(final_prompt)
 
-    # 4. return to frontend
     return {
         "success": True,
         "message": "Video generation started",
