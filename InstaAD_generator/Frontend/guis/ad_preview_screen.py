@@ -214,19 +214,40 @@ class AdPreviewScreen(QWidget):
     def load_video(self, url: str):
         self.current_video_url = url
         self.status_label.setText("✅ Masterpiece Ready!")
+
+        # video local download
         r = requests.get(url, stream=True)
         temp_path = os.path.join(tempfile.gettempdir(), f"{self.task_id}.mp4")
         with open(temp_path, "wb") as f:
-            for chunk in r.iter_content(1024 * 1024): f.write(chunk)
+            for chunk in r.iter_content(1024 * 1024):
+                f.write(chunk)
+
+        # extra space for video and feedback
+        EXTRA_HEIGHT = 120
+
         self.video_widget.show()
+
+        # window height adjustment
+        self.resize(self.width(), self.height() + EXTRA_HEIGHT)
+
+        # card height adjustment
+        self.card.setMinimumHeight(self.card.height() + EXTRA_HEIGHT)
+
+        # request layout update
+        self.card.adjustSize()
+        self.adjustSize()
+        # ========================================
+
         media = self.vlc_instance.media_new(temp_path)
         media.add_option("input-repeat=9999")
         self.vlc_player.set_media(media)
         self._bind_vlc_to_widget()
         self.vlc_player.play()
+
         self.save_btn.setEnabled(True)
         self.feedback_input.setEnabled(True)
         self.submit_feedback_btn.setEnabled(True)
+
 
     def _bind_vlc_to_widget(self):
         win_id = int(self.video_widget.winId())
