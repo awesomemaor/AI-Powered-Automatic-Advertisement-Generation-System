@@ -27,6 +27,8 @@ class UserHomeScreen(QWidget):
             }
         """)
 
+
+
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(50, 40, 50, 40)
         main_layout.setSpacing(20)
