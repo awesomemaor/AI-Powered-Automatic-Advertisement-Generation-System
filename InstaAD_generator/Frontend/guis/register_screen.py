@@ -7,8 +7,30 @@ from PyQt5.QtWidgets import (
     QMessageBox, QGraphicsDropShadowEffect, QFrame, QComboBox, QDateEdit
 )
 from PyQt5.QtGui import QFont, QPixmap, QColor, QPainter, QLinearGradient, QBrush, QPen
-from PyQt5.QtCore import Qt, QTimer, QPointF, QDate
+from PyQt5.QtCore import Qt, QTimer, QPointF, QDate, QThread, pyqtSignal
 from Backend.logic.register_logic import register_user
+
+# threading class for registration process
+class RegisterWorker(QThread):
+    finished = pyqtSignal(dict)
+
+    def __init__(self, username, password, birthdate, business_type, business_field):
+        super().__init__()
+        self.username = username
+        self.password = password
+        self.birthdate = birthdate
+        self.business_type = business_type
+        self.business_field = business_field
+
+    def run(self):
+        result = register_user(
+            self.username,
+            self.password,
+            self.birthdate,
+            self.business_type,
+            self.business_field
+        )
+        self.finished.emit(result)
 
 # מחלקת חלקיקים (להמשכיות העיצוב)
 class Particle:
@@ -57,6 +79,11 @@ class RegisterScreen(QWidget):
         for p in self.particles:
             painter.setBrush(QColor(0, 242, 254, p.alpha)) 
             painter.drawEllipse(QPointF(p.x, p.y), p.size, p.size)
+    
+    def resizeEvent(self, event):
+        if hasattr(self, "loading_overlay"):
+            self.loading_overlay.setGeometry(self.rect())
+        super().resizeEvent(event)
 
     def initUI(self):
         self.setWindowTitle("InstaAD | Register")
@@ -196,13 +223,34 @@ class RegisterScreen(QWidget):
         
         main_layout.addWidget(self.card)
 
+        # --- Loading overlay ---
+        self.loading_overlay = QLabel("Registering account...", self)
+        self.loading_overlay.setAlignment(Qt.AlignCenter)
+        self.loading_overlay.setStyleSheet("""
+            background-color: rgba(0,0,0,160);
+            color: white;
+            font-size: 18px;
+            border-radius: 20px;
+        """)
+        self.loading_overlay.hide()
+        self.loading_overlay.raise_()
+
     def register(self):
         username = self.username_input.text()
         password = self.password_input.text()
         birthdate = self.birthdate_input.date().toString("yyyy-MM-dd")
         business_type = self.type_input.currentText()
         business_field = self.field_input.text()
-        result = register_user(username, password, birthdate, business_type, business_field)
+
+        self.loading_overlay.show()
+
+        self.worker = RegisterWorker(username, password, birthdate, business_type, business_field)
+        self.worker.finished.connect(self.register_finished)
+        self.worker.start()
+    
+    def register_finished(self, result):
+        self.loading_overlay.hide()
+
         if result["success"]:
             QMessageBox.information(self, "Success", result["message"])
             self.parent.setCurrentWidget(self.parent.welcome_screen)
