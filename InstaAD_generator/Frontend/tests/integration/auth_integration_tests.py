@@ -1,25 +1,27 @@
 import uuid
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-from Backend.endpoints.auth_login import router as login_router
-from Backend.endpoints.auth_register import router as register_router
-
-# -------- FastAPI Test App --------
-app = FastAPI()
-app.include_router(login_router)
-app.include_router(register_router)
-
-client = TestClient(app)
+import pytest
+from Backend.endpoints import auth_login as login_module
+from Backend.endpoints import auth_register as register_module
+from utils.security import hash_password
+from unittest.mock import MagicMock
 
 # -------- Helpers --------
 def random_username():
     return f"user_{uuid.uuid4().hex[:8]}"
 
-# -------- Integration Tests --------
+# -------------------
+# Integration tests using client + mock_db
+# -------------------
 
-# tests if a new user can register successfully
-def test_register_success():
+def test_register_success(client, mock_db):
     username = random_username()
+
+    # מגדירים שהמשתמש לא קיים
+    mock_db.find_one.return_value = None
+    # insert_one מחזיר MagicMock עם inserted_id
+    mock_insert_result = MagicMock()
+    mock_insert_result.inserted_id = "mocked_id_123"
+    mock_db.insert_one.return_value = mock_insert_result
 
     response = client.post("/register", json={
         "username": username,
@@ -34,21 +36,13 @@ def test_register_success():
 
     assert response.status_code == 200
     assert response.json()["message"] == "User registered successfully"
+    assert "user_id" in response.json()
 
-# tests if registering an existing user fails
-def test_register_existing_user():
+def test_register_existing_user(client, mock_db):
     username = random_username()
 
-    client.post("/register", json={
-        "username": username,
-        "password": "pass1234",
-        "birthdate": "1990-01-01",
-        "business_type": "Self-employed",
-        "business_field": "Food",
-        "connected": False,
-        "searched_keywords": [],
-        "feedback_notes": []
-    })
+    # מגדירים שהמשתמש כבר קיים
+    mock_db.find_one.return_value = {"username": username}
 
     response = client.post("/register", json={
         "username": username,
@@ -64,8 +58,8 @@ def test_register_existing_user():
     assert response.status_code == 400
     assert response.json()["detail"] == "Username already registered"
 
-# tests if registering with missing fields fails
-def test_register_missing_field():
+def test_register_missing_field(client, mock_db):
+    # לא צריך לגעת ב-DB כאן
     response = client.post("/register", json={
         "username": "abc",
         "password": "1234",
@@ -79,23 +73,17 @@ def test_register_missing_field():
 
     assert response.status_code == 422
 
-# tests if a registered user can login successfully
-def test_login_success():
+def test_login_success(client, mock_db):
     username = random_username()
+    hashed_pw = hash_password("testpass")
 
-    # register first
-    client.post("/register", json={
+    # מגדירים שהמשתמש קיים ב-db
+    mock_db.find_one.return_value = {
         "username": username,
-        "password": "testpass",
-        "birthdate": "1999-01-01",
-        "business_type": "Self-employed",
-        "business_field": "Tech",
-        "connected": False,
-        "searched_keywords": [],
-        "feedback_notes": []
-    })
+        "password": hashed_pw,
+        "connected": False
+    }
 
-    # login
     response = client.post("/login", json={
         "username": username,
         "password": "testpass"
@@ -105,20 +93,15 @@ def test_login_success():
     assert response.json()["success"] is True
     assert "Login successful" in response.json()["message"]
 
-# tests login with wrong password
-def test_login_wrong_password():
+def test_login_wrong_password(client, mock_db):
     username = random_username()
+    hashed_pw = hash_password("correctpass")
 
-    client.post("/register", json={
+    mock_db.find_one.return_value = {
         "username": username,
-        "password": "correctpass",
-        "birthdate": "1999-01-01",
-        "business_type": "Self-employed",
-        "business_field": "Tech",
-        "connected": False,
-        "searched_keywords": [],
-        "feedback_notes": []
-    })
+        "password": hashed_pw,
+        "connected": False
+    }
 
     response = client.post("/login", json={
         "username": username,
@@ -127,8 +110,10 @@ def test_login_wrong_password():
 
     assert response.status_code == 401
 
-# tests login with non-existing user
-def test_login_user_not_found():
+def test_login_user_not_found(client, mock_db):
+    # משתמש לא קיים
+    mock_db.find_one.return_value = None
+
     response = client.post("/login", json={
         "username": "no_such_user",
         "password": "whatever"
@@ -137,25 +122,16 @@ def test_login_user_not_found():
     assert response.status_code == 401
     assert response.json()["detail"] == "User not found"
 
-# tests login when user is already connected
-def test_login_already_connected():
+def test_login_already_connected(client, mock_db):
     username = random_username()
+    hashed_pw = hash_password("pass123")
 
-    client.post("/register", json={
+    # מחזירים שהמשתמש מחובר כבר
+    mock_db.find_one.return_value = {
         "username": username,
-        "password": "pass123",
-        "birthdate": "1995-01-01",
-        "business_type": "Self-employed",
-        "business_field": "Tech",
-        "connected": False,
-        "searched_keywords": [],
-        "feedback_notes": []
-    })
-
-    client.post("/login", json={
-        "username": username,
-        "password": "pass123"
-    })
+        "password": hashed_pw,
+        "connected": True
+    }
 
     response = client.post("/login", json={
         "username": username,
@@ -165,4 +141,3 @@ def test_login_already_connected():
     assert response.status_code == 200
     assert response.json()["success"] is False
     assert response.json()["message"] == "User already logged in."
-

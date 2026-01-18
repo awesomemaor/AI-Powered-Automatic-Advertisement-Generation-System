@@ -23,9 +23,15 @@ async def save_keywords(req: KeywordRequest):
         {"$addToSet": {"searched_keywords": {"$each": keywords}}}
     )
 
-    if result.modified_count == 0:
+    if result.matched_count == 0:
+        # המשתמש בכלל לא קיים
         raise HTTPException(status_code=400, detail="User not found")
 
+    if result.modified_count == 0:
+        # המשתמש קיים, אבל המילים כבר נמצאות
+        return {"message": "Keywords already exist", "keywords_added": []}
+
+    # המילים נוספו בהצלחה
     return {"message": "Keywords saved", "keywords_added": keywords}
 
 @router.post("/save_feedback")

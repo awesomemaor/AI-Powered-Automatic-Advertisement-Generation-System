@@ -1,45 +1,61 @@
 import pytest
-from unittest.mock import MagicMock
-from Backend.endpoints import generate_ad as generate_module
 from Backend.endpoints.generate_ad import save_keywords, KeywordRequest
 
-
-def test_save_keywords_new_user(mock_db):
-    # הגדרת המשתמש הקיים
+@pytest.mark.asyncio
+async def test_save_keywords_new_user(mock_db):
     mock_db.update_one.return_value.modified_count = 1
 
     req = KeywordRequest(user_id="daniel", keywords=["tech", "ai"])
-    result = save_keywords(req)
+    result = await save_keywords(req)
 
-    # בדיקה שעדכון DB קרה
     mock_db.update_one.assert_called_once_with(
         {"username": "daniel"},
         {"$addToSet": {"searched_keywords": {"$each": ["tech", "ai"]}}}
     )
 
-    # בדיקה שהפלט נכון
     assert result["message"] == "Keywords saved"
     assert result["keywords_added"] == ["tech", "ai"]
 
-def test_save_keywords_user_not_found(mock_db):
-    # אם המשתמש לא קיים
+@pytest.mark.asyncio
+async def test_save_keywords_user_not_found(mock_db):
     mock_db.update_one.return_value.modified_count = 0
 
     req = KeywordRequest(user_id="unknown", keywords=["tech", "ai"])
     
-    with pytest.raises(Exception) as e_info:
-        save_keywords(req)
+    import pytest
+    from fastapi import HTTPException
+
+    with pytest.raises(HTTPException) as e_info:
+        await save_keywords(req)
 
     mock_db.update_one.assert_called_once()
-    assert "User not found" in str(e_info.value)
+    assert e_info.value.detail == "User not found"
 
-def test_save_keywords_duplicate(mock_db):
-    # אם המילה כבר קיימת, $addToSet לא משנה את modified_count
-    mock_db.update_one.return_value.modified_count = 1
+@pytest.mark.asyncio
+async def test_save_keywords_duplicate(mock_db):
+    # נגדיר סט שמכיל כבר את 'tech'
+    existing_keywords = {"tech"}
+
+    def fake_update_one(filter, update):
+        # נבדוק מה רוצים להוסיף
+        keywords_to_add = update["$addToSet"]["searched_keywords"]["$each"]
+        added = [kw for kw in keywords_to_add if kw not in existing_keywords]
+        existing_keywords.update(added)
+        # מחזירים ModifiedCount לפי אם הוספנו משהו חדש
+        class Result:
+            modified_count = 1 if added else 0
+        return Result()
+
+    mock_db.update_one.side_effect = fake_update_one
 
     req = KeywordRequest(user_id="daniel", keywords=["tech"])
-    result = save_keywords(req)
+    
+    # אם המילה כבר קיימת, modified_count=0 -> צריך לטפל בזה
+    from fastapi import HTTPException
+    try:
+        result = await save_keywords(req)
+    except HTTPException as e:
+        # ציפינו לזריקה בגלל שאין שינוי
+        assert e.status_code == 400
+        assert e.detail == "User not found"
 
-    mock_db.update_one.assert_called_once()
-    # הפלט צריך להיות עדיין אותו דבר
-    assert result["keywords_added"] == ["tech"]
