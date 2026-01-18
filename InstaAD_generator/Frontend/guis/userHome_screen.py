@@ -4,10 +4,28 @@ import os
 import math
 from PyQt5.QtWidgets import QWidget, QMessageBox, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QGraphicsDropShadowEffect, QFrame
 from PyQt5.QtGui import QFont, QColor, QPainter, QLinearGradient, QBrush, QPen
-from PyQt5.QtCore import Qt, QTimer, QPointF
+from PyQt5.QtCore import Qt, QTimer, QPointF, QThread, pyqtSignal
 from Backend.logic.login_logic import logout_user_request
 from Backend.logic.generate_ad_logic import handle_generate
 from guis.ad_preview_screen import AdPreviewScreen
+
+# threading class for ad generation process
+class GenerateThread(QThread):
+    finished = pyqtSignal(dict)
+
+    def __init__(self, prompt, user_id, mode):
+        super().__init__()
+        self.prompt = prompt
+        self.user_id = user_id
+        self.mode = mode
+
+    def run(self):
+        result = handle_generate(
+            prompt=self.prompt,
+            user_id=self.user_id,
+            mode=self.mode
+        )
+        self.finished.emit(result)
 
 # מחלקת חלקיקים
 class Particle:
@@ -57,6 +75,11 @@ class UserHomeScreen(QWidget):
         for p in self.particles:
             painter.setBrush(QColor(0, 242, 254, p.alpha)) 
             painter.drawEllipse(QPointF(p.x, p.y), p.size, p.size)
+    
+    def resizeEvent(self, event):
+        if hasattr(self, "loading_overlay"):
+            self.loading_overlay.setGeometry(self.rect())
+        super().resizeEvent(event)
 
     def initUI(self):
         self.setWindowTitle("InstaAD | Dashboard")
@@ -158,31 +181,54 @@ class UserHomeScreen(QWidget):
 
         main_layout.addWidget(self.card)
 
+        # Loading overlay
+        self.loading_overlay = QLabel("✨ Creating your ad...")
+        self.loading_overlay.setAlignment(Qt.AlignCenter)
+        self.loading_overlay.setStyleSheet("""
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            font-size: 20px;
+            border-radius: 20px;
+        """)
+        self.loading_overlay.setParent(self)
+        self.loading_overlay.hide()
+
     def start_new_ad(self):
         self.parent.generate_screen.username = self.username
         self.parent.setCurrentWidget(self.parent.generate_screen)
 
     # recommended ad creation flow
     def generate_recommended(self):
-        result = handle_generate(
+        self.loading_overlay.show()
+
+        self.gen_thread = GenerateThread(
             prompt=None,
             user_id=self.username,
             mode="recommended"
         )
 
-        if result.get("success"):
-            data = result["data"]
+        self.gen_thread.finished.connect(self.on_generate_finished)
+        self.gen_thread.start()
 
-            self.preview_window = AdPreviewScreen(
-                task_id=data["task_id"],
-                keywords=data.get("keywords", []),
-                username=self.username,
-                go_back_callback=self.return_from_preview
-            )
+    def on_generate_finished(self, result):
+        self.loading_overlay.hide()
 
-            self.hide()
-            self.preview_window.show()
-    
+        if not result.get("success"):
+            QMessageBox.warning(self, "Error", result.get("message"))
+            return
+
+        data = result["data"]
+
+        self.preview_window = AdPreviewScreen(
+            task_id=data["task_id"],
+            keywords=data.get("keywords", []),
+            username=self.username,
+            go_back_callback=self.return_from_preview
+        )
+
+        self.hide()
+        self.preview_window.show()
+
     def return_from_preview(self):
         """נקראת כשהמשתמש לוחץ Try Again"""
         if self.preview_window:

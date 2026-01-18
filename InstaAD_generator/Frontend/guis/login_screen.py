@@ -4,9 +4,22 @@ import os
 import math
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit, QMessageBox, QGraphicsDropShadowEffect, QFrame
 from PyQt5.QtGui import QFont, QPixmap, QColor, QPainter, QLinearGradient, QBrush, QPen
-from PyQt5.QtCore import Qt, QTimer, QPointF
+from PyQt5.QtCore import Qt, QTimer, QPointF, QThread, pyqtSignal
 from Backend.logic.login_logic import login_user
 from Backend.logic.login_logic import logout_user_request
+
+# threading class for login process
+class LoginWorker(QThread):
+    finished = pyqtSignal(dict)
+
+    def __init__(self, username, password):
+        super().__init__()
+        self.username = username
+        self.password = password
+
+    def run(self):
+        result = login_user(self.username, self.password)
+        self.finished.emit(result)
 
 # מחלקת החלקיקים לרקע
 class Particle:
@@ -58,6 +71,11 @@ class LoginScreen(QWidget):
         for p in self.particles:
             painter.setBrush(QColor(0, 242, 254, p.alpha)) 
             painter.drawEllipse(QPointF(p.x, p.y), p.size, p.size)
+    
+    def resizeEvent(self, event):
+        if hasattr(self, "loading_overlay"):
+            self.loading_overlay.setGeometry(self.rect())
+        super().resizeEvent(event)
 
     def initUI(self):
         self.setWindowTitle("InstaAD | Login")
@@ -169,44 +187,65 @@ class LoginScreen(QWidget):
 
         main_layout.addWidget(self.card)
 
-    # --- פונקציות הלוגיקה שלך (ללא שינוי) ---
+        self.loading_overlay = QLabel("Connecting...", self)
+        self.loading_overlay.setAlignment(Qt.AlignCenter)
+        self.loading_overlay.setStyleSheet("""
+            background-color: rgba(0, 0, 0, 160);
+            color: white;
+            font-size: 18px;
+            border-radius: 20px;
+        """)
+        self.loading_overlay.hide()
+        self.loading_overlay.raise_()
+
+    # logic functions
     def go_back(self):
         self.parent.setCurrentWidget(self.parent.welcome_screen)
 
     def try_login(self):
         username = self.username_input.text()
         password = self.password_input.text()
-        result = login_user(username, password)
+
+        if not username or not password:
+            QMessageBox.warning(self, "Error", "Please enter username and password")
+            return
+
+        # הצגת טעינה
+        self.loading_overlay.show()
+
+        # יצירת worker
+        self.login_worker = LoginWorker(username, password)
+        self.login_worker.finished.connect(self.on_login_finished)
+        self.login_worker.start()
+
+    def on_login_finished(self, result):
+        self.loading_overlay.hide()
         msg = QMessageBox()
+
         if result["success"]:
             msg.setText(result["message"])
             msg.setIcon(QMessageBox.Information)
             msg.exec_()
+
             from guis.userHome_screen import UserHomeScreen
-            user_home = UserHomeScreen(self.parent, username)
+            user_home = UserHomeScreen(self.parent, self.username_input.text())
+
             self.parent.user_home_screen = user_home
             self.parent.generate_screen.user_home_screen = user_home
             self.parent.addWidget(user_home)
             self.parent.setCurrentWidget(user_home)
+
         else:
             if result["message"] == "User already logged in.":
-                msg = QMessageBox()
                 msg.setWindowTitle("User Already Logged In")
                 msg.setText("User already logged in.\nWould you like to sign out now?")
                 msg.setIcon(QMessageBox.Question)
                 msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
                 choice = msg.exec_()
+
                 if choice == QMessageBox.Yes:
-                    logout_user_request(username)
-                    msg = QMessageBox()
-                    msg.setWindowTitle("Logged Out")
-                    msg.setText("You have been logged out. Please log in again.")
-                    msg.setIcon(QMessageBox.Information)
-                    msg.exec_()
+                    logout_user_request(self.username_input.text())
+                    QMessageBox.information(self, "Logged Out", "You have been logged out. Please log in again.")
                     self.parent.setCurrentWidget(self.parent.welcome_screen)
-                else: return
             else:
-                msg = QMessageBox()
-                msg.setText("Login failed: " + result["message"])
-                msg.setIcon(QMessageBox.Critical)
-                msg.exec_()
+                QMessageBox.critical(self, "Login failed", result["message"])
