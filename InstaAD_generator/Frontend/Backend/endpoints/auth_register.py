@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from Backend.endpoints.db_init import customers_collection
+from utils.security import hash_password
 from bson import ObjectId
 
 router = APIRouter()
@@ -24,16 +25,18 @@ def register_user(data: RegisterRequest):
             status_code=400,
             detail="Username already registered"
         )
+    
+    hashed_password = hash_password(data.password) # hashing the password before storing
 
     new_user = {
         "username": data.username,
-        "password": data.password,   # לזכור לעשות hash בעתיד
+        "password": hashed_password, # hashed password storage
         "birthdate": data.birthdate,
         "business_type": data.business_type,
         "business_field": data.business_field,
         "connected": False,
-        "searched_keywords": [data.business_field.lower()], #שמירה של מילות חיפוש
-        "feedback_notes": [] # שמירה של פידבקים מהמשתמש
+        "searched_keywords": [data.business_field.lower()], # saving user searched keywords
+        "feedback_notes": [] # saving user feedback notes
     }
 
     result = customers_collection.insert_one(new_user)
