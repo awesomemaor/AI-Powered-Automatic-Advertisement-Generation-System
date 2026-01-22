@@ -17,7 +17,7 @@ InstaAD uses AI to **automatically generate personalized video advertisements**.
 - **Backend:** FastAPI (RESTful API)  
 - **Database:** MongoDB (PyMongo)
 - **API:** KIE.ai + Seedance 1.5 pro (text to video) model
-- **Security::** Argon2 hashing
+- **Security:** Argon2 hashing
 
 ## 👥 Team
 **Daniel Ayash** & **Maor Siboni**
