@@ -6,7 +6,7 @@ pwd_context = CryptContext(
 )
 
 def hash_password(password: str) -> str:
-    # אין צורך ב-SHA256, Argon2 כבר בטוח עם כל אורך סיסמה
+    # Hash the password using Argon2
     return pwd_context.hash(password)
 
 def verify_password(password: str, hashed_password: str) -> bool:
