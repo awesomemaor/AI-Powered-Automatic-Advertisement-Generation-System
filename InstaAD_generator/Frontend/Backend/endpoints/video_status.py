@@ -22,7 +22,7 @@ def check_video_status(req: StatusRequest):
 
         return {
             "status": "SUCCESS",
-            "video_url": "https://tempfile.aiquickdraw.com/h/453fb6c376103ab6551e00201cf9c149_1768321522.mp4"
+            "video_url": "https://tempfile.aiquickdraw.com/h/02f256f3c0b8e39c10a59e310ce567ab_1770207163.mp4"
         }
 
     # ---------- REAL KIE ----------

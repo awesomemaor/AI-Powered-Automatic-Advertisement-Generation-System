@@ -7,7 +7,7 @@ import re
 import os
 from Backend.logic.gemini_helper import enhance_prompt_with_gemini
 
-USE_MOCK = True  # for debug purposes
+USE_MOCK = True  # for debug purposes to not wast KIE tokens
 KIE_API_KEY = os.getenv("KIE_API_KEY")  
 KIE_CREATE_TASK_URL = "https://api.kie.ai/api/v1/jobs/createTask"
 print("KIE_API_KEY =", os.getenv("KIE_API_KEY"))
@@ -94,11 +94,13 @@ def fetch_user_ad_prefernces(user_id: str):
 # Create Seedance Task (KIE)
 # ======================
 def create_seedance_video_task(prompt: str):
+    # smock section for debug purposes
     if USE_MOCK:
         mock_task_id = f"mock-{uuid.uuid4().hex[:8]}"
         print("MOCK MODE: returning fake task_id:", mock_task_id)
         return mock_task_id
     
+    # real section for KIE API
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {KIE_API_KEY}"
@@ -196,6 +198,8 @@ def handle_generate(prompt: str | None, user_id: str, mode="manual"):
 
     task_id = create_seedance_video_task(final_prompt)
 
+    # returns to generate_screen then sends the taskid to Ad_preview_screen and from there to the 
+    # הסבר בשבילנו)המשך )- video_status backend get the response of the video url and show it
     return {
         "success": True,
         "message": "Video generation started",

@@ -135,6 +135,7 @@ class AdHistoryScreen(QWidget):
         
         self.main_layout.addWidget(self.scroll)
 
+    # section to load ads from backend and create cards
     def load_ads(self, username: str):
         self.username = username
         while self.grid.count():
@@ -261,7 +262,7 @@ class AdHistoryScreen(QWidget):
         self._bind_vlc(card)
         card.vlc_player.play()
 
-    # --- שאר הלוגיקה שלך (ללא שינוי) ---
+    # event handlers logic
     def _on_view_clicked(self, card):
         if not card.is_playing:
             card.is_playing = True
