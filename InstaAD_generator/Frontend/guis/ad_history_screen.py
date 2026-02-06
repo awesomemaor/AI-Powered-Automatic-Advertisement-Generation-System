@@ -213,6 +213,21 @@ class AdHistoryScreen(QWidget):
         view_btn.clicked.connect(lambda: self._on_view_clicked(card))
         card.layout.addWidget(view_btn)
 
+        download_btn = QPushButton("⬇ DOWNLOAD")
+        download_btn.setFixedHeight(50)
+        download_btn.setCursor(Qt.PointingHandCursor)
+        download_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #43e97b, stop:1 #38f9d7);
+                color: #0d1117;
+                font-weight: 800;
+                border-radius: 12px;    
+            }
+            QPushButton:hover { background: white; }
+        """)
+        download_btn.clicked.connect(lambda: os.startfile(card.video_url) if sys.platform.startswith("win") else os.system(f"open {card.video_url}"))
+        card.layout.addWidget(download_btn)
+
         # כפתור מחיקה
         delete_btn = QPushButton("🗑 Delete Ad")
         delete_btn.setCursor(Qt.PointingHandCursor)

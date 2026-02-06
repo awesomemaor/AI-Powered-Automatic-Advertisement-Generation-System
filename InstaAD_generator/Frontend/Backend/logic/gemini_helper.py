@@ -15,6 +15,9 @@ def enhance_prompt_with_gemini(user_input: str):
     try:
         # Initialize Gemini client
         client = genai.Client(api_key=GEMINI_API_KEY)
+
+        for model in client.models.list():
+            print(f"Available model: {model.name} - {model.description}")
        
         system_instruction = """
         You are an expert AI Video Prompt Engineer.
@@ -29,7 +32,7 @@ def enhance_prompt_with_gemini(user_input: str):
         
         # Call Gemini model to enhance the prompt
         response = client.models.generate_content(
-            model='models/gemini-2.0-flash-lite-preview-02-05', 
+            model='models/gemini-2.5-flash-lite', # stable working version (נשאר עם זהע)
             contents=f"{system_instruction}\n\nUser Input: {user_input}\nEnhanced Prompt:"
         )
         
