@@ -9,14 +9,15 @@ services:
       - "8000:8000"
     depends_on:
       - instaad-mongo
-    environment:
-      # Connection to the internal database (using the service name)
-      - MONGO_URI=${MONGO_URI}
-      # Your keys will be loaded from the host environment/.env file
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - KIE_API_KEY=${KIE_API_KEY}
+    
+    # Instead of listing keys manually, we load the whole .env file
+    # Docker automatically injects them into the container
+    env_file:
+      - .env
+    # ---------------------
+
     volumes:
-      # Live code loading (allows code changes without rebuilding)
+      # Live code loading
       - .:/app
     restart: always
 
@@ -27,7 +28,7 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      # Persist data so it survives container restarts
+      # Persist data
       - mongo_data:/data/db
     restart: always
 

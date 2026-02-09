@@ -6,6 +6,9 @@ import time
 import re
 import os
 from Backend.logic.gemini_helper import enhance_prompt_with_gemini
+from dotenv import load_dotenv
+
+load_dotenv()
 
 USE_MOCK = True  # for debug purposes to not wast KIE tokens
 KIE_API_KEY = os.getenv("KIE_API_KEY")  

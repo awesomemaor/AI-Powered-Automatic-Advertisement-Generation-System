@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir -r backend_requirements.txt
 # This copies 'server.py' and the 'Frontend' folder (which contains 'Backend')
 COPY . .
 
-# 6. Set Environment Variable - The Magic Fix!
+# 6. Set Environment Variable
 # We tell Python to search for modules in both the root (/app) and inside /app/Frontend.
 # This allows 'import Backend' to work even though it is nested inside 'Frontend'.
 ENV PYTHONPATH=/app:/app/Frontend
