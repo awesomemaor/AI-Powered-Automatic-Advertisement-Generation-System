@@ -5,7 +5,7 @@ from fastapi import FastAPI
 # Inside Docker, we are already in the correct path thanks to the PYTHONPATH we defined.
 # There is no need to write 'InstaAD_generator' nor 'Frontend'.
 # We can simply access 'Backend' directly:
-from Frontend.Backend.endpoints import generate_ad, save_ad, auth_login, auth_register, video_status
+from Backend.endpoints import generate_ad, save_ad, auth_login, auth_register, video_status
 
 # Create the application
 app = FastAPI(title="InstaAD Backend")

@@ -16,9 +16,8 @@ RUN pip install --no-cache-dir -r backend_requirements.txt
 COPY . .
 
 # 6. Set Environment Variable
-# We tell Python to search for modules in both the root (/app) and inside /app/Frontend.
-# This allows 'import Backend' to work even though it is nested inside 'Frontend'.
-ENV PYTHONPATH=/app:/app/Frontend
+# This is optional, but it can be useful to ensure that Python can our modules.
+ENV PYTHONPATH=/app
 
 # 7. Expose the port
 EXPOSE 8000
