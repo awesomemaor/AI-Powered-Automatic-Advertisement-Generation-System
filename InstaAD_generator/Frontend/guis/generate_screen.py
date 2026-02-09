@@ -4,10 +4,28 @@ import os
 import math
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QGraphicsDropShadowEffect, QMessageBox, QFrame, QHBoxLayout
 from PyQt5.QtGui import QFont, QColor, QPainter, QLinearGradient, QBrush, QPen
-from PyQt5.QtCore import Qt, QTimer, QPointF
+from PyQt5.QtCore import Qt, QTimer, QPointF, QThread, pyqtSignal
 from Backend.logic.login_logic import logout_user_request
 from Backend.logic.generate_ad_logic import handle_generate
 from guis.ad_preview_screen import AdPreviewScreen
+
+class GenerateThread(QThread):
+    finished = pyqtSignal(dict)
+
+    def __init__(self, prompt, user_id, mode):
+        super().__init__()
+        self.prompt = prompt
+        self.user_id = user_id
+        self.mode = mode
+
+    def run(self):
+        # This runs in a separate thread to avoid blocking the GUI 
+        result = handle_generate(
+            prompt=self.prompt,
+            user_id=self.user_id,
+            mode=self.mode
+        )
+        self.finished.emit(result)
 
 class Particle:
     def __init__(self, width, height):
@@ -92,6 +110,12 @@ class GenerateScreen(QWidget):
         for p in self.particles:
             painter.setBrush(QColor(0, 242, 254, p.alpha)) 
             painter.drawEllipse(QPointF(p.x, p.y), p.size, p.size)
+    
+    def resizeEvent(self, event):
+        # covering the new area with the loading overlay if it's visible
+        if hasattr(self, "loading_overlay"):
+            self.loading_overlay.setGeometry(self.rect())
+        super().resizeEvent(event)
 
     def initUI(self):
         self.setWindowTitle("InstaAD | AI Generation")
@@ -193,7 +217,22 @@ class GenerateScreen(QWidget):
         shadow.setBlurRadius(70)
         shadow.setColor(QColor(0, 0, 0, 180))
         self.card.setGraphicsEffect(shadow)
+
         main_layout.addWidget(self.card)
+
+        # Loading overlay
+        self.loading_overlay = QLabel("✨ Enhancing your prompt and creating your ad... ✨")
+        self.loading_overlay.setAlignment(Qt.AlignCenter)
+        self.loading_overlay.setFont(QFont("Segoe UI", 16, QFont.Bold))
+        # blackish transparent background with white text
+        self.loading_overlay.setStyleSheet("""
+            background: rgba(0, 0, 0, 180);
+            color: white;
+            font-size: 20px;
+            border-radius: 20px;
+        """)
+        self.loading_overlay.setParent(self) # making it above the entire screen
+        self.loading_overlay.hide()          # hide initially 
 
     def on_logout(self):
         logout_user_request(self.username)
@@ -202,12 +241,30 @@ class GenerateScreen(QWidget):
     # manual ad creation flow
     def on_generate_clicked(self):
         prompt = self.prompt_input.text().strip()
+        
+        # Input validation
         if not prompt:
-            QMessageBox.warning(self, "Error", "Please enter a prompt")
+            QMessageBox.warning(self, "Error", "Please enter a prompt description.")
             return
 
-        result = handle_generate(prompt, self.username, mode="manual")
+        # 1. Show loading overlay
+        self.loading_overlay.show()
+        self.loading_overlay.raise_()  # Ensure it is on top
 
+        # 2. Initialize and start the generation thread
+        self.gen_thread = GenerateThread(
+            prompt=prompt,
+            user_id=self.username,
+            mode="manual"
+        )
+        self.gen_thread.finished.connect(self.on_generate_finished)
+        self.gen_thread.start()
+
+    def on_generate_finished(self, result):
+        # 1. Hide loading overlay and reset button state
+        self.loading_overlay.hide()
+
+        # 2. Success - Navigate to Preview Screen
         if result.get("success"):
             data = result.get("data", {})
             task_id = data.get("task_id")
@@ -221,8 +278,11 @@ class GenerateScreen(QWidget):
                 self.hide()
                 self.preview_window.show()
                 return
+            
+        # 3. Check for server/API errors
         QMessageBox.critical(self, "Error", result.get("message", "Video generation failed"))
 
+    # close the preview and return to this screen
     def return_from_preview(self):
         if self.preview_window:
             self.preview_window.close()

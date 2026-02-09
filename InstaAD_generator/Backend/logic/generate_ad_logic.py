@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-USE_MOCK = False  # for debug purposes to not wast KIE tokens
+USE_MOCK = True  # for debug purposes to not wast KIE tokens
 KIE_API_KEY = os.getenv("KIE_API_KEY")  
 KIE_CREATE_TASK_URL = "https://api.kie.ai/api/v1/jobs/createTask"
 print("KIE_API_KEY =", os.getenv("KIE_API_KEY"))
