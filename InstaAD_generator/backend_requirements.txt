@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pymongo
+requests
+pydantic
+python-dotenv
+replicate
+google-genai
+argon2-cffi
+passlib
+email-validator

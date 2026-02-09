@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # The Backend Service
+  instaad-backend:
+    build: .
+    container_name: instaad-server
+    ports:
+      - "8000:8000"
+    depends_on:
+      - instaad-mongo
+    environment:
+      # Connection to the internal database (using the service name)
+      - MONGO_URI=${MONGO_URI}
+      # Your keys will be loaded from the host environment/.env file
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - KIE_API_KEY=${KIE_API_KEY}
+    volumes:
+      # Live code loading (allows code changes without rebuilding)
+      - .:/app
+    restart: always
+
+  # The Database
+  instaad-mongo:
+    image: mongo:latest
+    container_name: instaad-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      # Persist data so it survives container restarts
+      - mongo_data:/data/db
+    restart: always
+
+volumes:
+  mongo_data:
