@@ -1,6 +1,7 @@
 from pymongo import MongoClient
+import os
 
-MONGO_URI = "mongodb+srv://020696:020696@cluster0.i3kuv.mongodb.net/?retryWrites=true&w=majority"
+MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI)
 
 db = client["InstaAdDB"]

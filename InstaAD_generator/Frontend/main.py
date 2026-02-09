@@ -12,7 +12,6 @@ from guis.ad_history_screen import AdHistoryScreen
 from PyQt5.QtWidgets import QApplication, QStackedWidget
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-#from Backend.api import app as auth_app
 from Backend.endpoints.auth_login import router as login_router
 from Backend.endpoints.auth_register import router as register_router
 from Backend.endpoints.generate_ad import router as generate_ad_router
