@@ -8,7 +8,7 @@ frontend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, frontend_root)
 
 # import our FastAPI app
-from main import app
+from server import app
 
 # test client fixture for integration tests
 @pytest.fixture

@@ -1,4 +1,4 @@
-from Frontend.Backend.logic.register_logic import validate_inputs
+from Backend.logic.register_logic import validate_inputs
 
 def test_validate_inputs_missing_username():
     res = validate_inputs("", "1234", "2000-01-01", "Self-employed", "Food")
