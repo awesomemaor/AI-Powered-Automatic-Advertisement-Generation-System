@@ -134,7 +134,7 @@ class RegisterScreen(QWidget):
             }
         """
         
-        # סטייל ספציפי לכותרות הקטגוריות - מבטל את הריבועים שראית בתמונה
+        # סטייל ספציפי לכותרות הקטגוריות
         category_label_style = """
             QLabel {
                 color: white; 
@@ -171,6 +171,57 @@ class RegisterScreen(QWidget):
         self.birthdate_input.setDate(QDate.currentDate())
         self.birthdate_input.setStyleSheet(input_style)
         self.birthdate_input.setFixedHeight(50)
+        
+        # --- תיקון העיצוב של לוח השנה ---
+        calendar_style = """
+            QCalendarWidget QWidget {
+                alternate-background-color: #1e1e36;
+            }
+            QCalendarWidget QWidget#qt_calendar_navigationbar {
+                background-color: #0f0c29;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                padding: 5px;
+            }
+            QCalendarWidget QToolButton {
+                color: white;
+                font-size: 14px;
+                font-weight: bold;
+                background-color: transparent;
+                border: none;
+                border-radius: 5px;
+                padding: 5px;
+            }
+            QCalendarWidget QToolButton:hover {
+                background-color: rgba(0, 242, 254, 0.2);
+            }
+            QCalendarWidget QMenu {
+                background-color: #1a1a2e;
+                color: white;
+                border: 1px solid #00f2fe;
+            }
+            QCalendarWidget QSpinBox {
+                background-color: #1a1a2e;
+                color: white;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 3px;
+                selection-background-color: #00f2fe;
+                selection-color: black;
+            }
+            /* עיצוב רשת הימים */
+            QCalendarWidget QAbstractItemView:enabled {
+                color: white;
+                background-color: #15152b;
+                selection-background-color: #00f2fe;
+                selection-color: #0d1117;
+                outline: none;
+            }
+            QCalendarWidget QAbstractItemView:disabled {
+                color: #4a4a6a;
+            }
+        """
+        self.birthdate_input.calendarWidget().setStyleSheet(calendar_style)
+        # ---------------------------------
+        
         card_layout.addWidget(self.birthdate_input)
 
         # קטגוריית סוג עסק
@@ -213,7 +264,6 @@ class RegisterScreen(QWidget):
         self.back_button.setStyleSheet("color: #94a3b8; background: transparent; font-size: 13px; border: none;")
         card_layout.addWidget(self.back_button, alignment=Qt.AlignCenter)
 
-        # זה מה שדוחף הכל למעלה ומונע את הפיזור שראית בתמונה
         card_layout.addStretch()
 
         shadow = QGraphicsDropShadowEffect()

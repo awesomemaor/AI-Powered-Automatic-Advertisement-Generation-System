@@ -5,17 +5,18 @@ import math
 import tempfile
 import requests
 import vlc
+from datetime import datetime
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QHBoxLayout,
-    QScrollArea, QGridLayout, QPushButton, QFrame, QMessageBox, QGraphicsDropShadowEffect
+    QScrollArea, QGridLayout, QPushButton, QFrame, QMessageBox, 
+    QGraphicsDropShadowEffect, QSizePolicy
 )
-from PyQt5.QtGui import QFont, QColor, QPainter, QLinearGradient
+from PyQt5.QtGui import QFont, QColor, QPainter, QLinearGradient, QCursor
 from PyQt5.QtCore import Qt, QTimer, QPointF
-from PyQt5.QtMultimediaWidgets import QVideoWidget
 
+# ייבוא הלוגיקה מהבאקנד שלך
 from Backend.logic.save_ad_logic import handle_get_ad, handle_delete_ad
 
-# מחלקת חלקיקים להמשכיות העיצוב
 class Particle:
     def __init__(self, width, height):
         self.x = random.random() * width
@@ -40,7 +41,6 @@ class AdHistoryScreen(QWidget):
         
         self.initUI()
         
-        # אנימציה לרקע
         self.gradient_offset = 0
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_frame)
@@ -74,9 +74,8 @@ class AdHistoryScreen(QWidget):
         self.main_layout.setContentsMargins(40, 40, 40, 40)
         self.main_layout.setSpacing(25)
 
-        # Header: Back Button + Title
+        # Header
         header_layout = QHBoxLayout()
-        
         back_btn = QPushButton("← Back")
         back_btn.setFixedSize(100, 40)
         back_btn.setCursor(Qt.PointingHandCursor)
@@ -92,7 +91,6 @@ class AdHistoryScreen(QWidget):
         """)
         back_btn.clicked.connect(self.go_back)
         header_layout.addWidget(back_btn)
-        
         header_layout.addStretch()
 
         title = QLabel("Advertisement Gallery")
@@ -101,29 +99,17 @@ class AdHistoryScreen(QWidget):
         header_layout.addWidget(title)
         
         header_layout.addStretch()
-        # מרווח בצד ימין כדי שהכותרת תהיה במרכז באמת
         header_layout.addSpacing(100) 
 
         self.main_layout.addLayout(header_layout)
 
-        # Scroll Area Styling (שקיפות היא המפתח כאן)
+        # Scroll Area
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setStyleSheet("""
-            QScrollArea {
-                border: none;
-                background: transparent;
-            }
-            QScrollBar:vertical {
-                background: rgba(255, 255, 255, 0.05);
-                width: 10px;
-                border-radius: 5px;
-            }
-            QScrollBar::handle:vertical {
-                background: #00f2fe;
-                min-height: 20px;
-                border-radius: 5px;
-            }
+            QScrollArea { border: none; background: transparent; }
+            QScrollBar:vertical { background: rgba(255, 255, 255, 0.05); width: 10px; border-radius: 5px; }
+            QScrollBar::handle:vertical { background: #00f2fe; min-height: 20px; border-radius: 5px; }
         """)
 
         self.container = QWidget()
@@ -135,7 +121,6 @@ class AdHistoryScreen(QWidget):
         
         self.main_layout.addWidget(self.scroll)
 
-    # section to load ads from backend and create cards
     def load_ads(self, username: str):
         self.username = username
         while self.grid.count():
@@ -153,23 +138,31 @@ class AdHistoryScreen(QWidget):
                 col = 0
                 row += 1
 
+    def format_date_string(self, date_str):
+        try:
+            clean_date = date_str.split('.')[0] 
+            dt_obj = datetime.strptime(clean_date, "%Y-%m-%dT%H:%M:%S")
+            return dt_obj.strftime("%d %b %Y | %H:%M")
+        except Exception:
+            return date_str
+
     def create_ad_card(self, ad: dict):
         card = QFrame()
-        card.setMinimumHeight(350)
+        card.setMinimumHeight(380)
         card.setStyleSheet("""
             QFrame {
-                background-color: rgba(255, 255, 255, 0.07);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 20px;
+                background-color: rgba(30, 30, 40, 0.7);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 16px;
             }
         """)
         card.layout = QVBoxLayout(card)
-        card.layout.setContentsMargins(20, 20, 20, 20)
-        card.layout.setSpacing(15)
+        card.layout.setContentsMargins(15, 15, 15, 15)
+        card.layout.setSpacing(10)
         
         card.ad_id = ad["_id"]
         card.video_url = ad["video_url"]
-        card.saved_at = ad["saved_at"]
+        card.saved_at = self.format_date_string(ad["saved_at"])
         card.is_playing = False
 
         card.vlc_instance = vlc.Instance("--no-xlib", "--quiet")
@@ -177,10 +170,9 @@ class AdHistoryScreen(QWidget):
 
         self._build_card_normal(card)
         
-        # צל עדין לכרטיס
         shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(25)
-        shadow.setColor(QColor(0, 0, 0, 100))
+        shadow.setBlurRadius(20)
+        shadow.setColor(QColor(0, 0, 0, 80))
         card.setGraphicsEffect(shadow)
         
         return card
@@ -188,80 +180,159 @@ class AdHistoryScreen(QWidget):
     def _build_card_normal(self, card):
         self._clear_layout(card.layout)
         
-        # תצוגת תאריך
-        date_label = QLabel(f"Generated on:\n{card.saved_at}")
-        date_label.setFont(QFont("Segoe UI", 11))
-        date_label.setStyleSheet("color: #a0aec0; border: none; background: transparent;")
-        date_label.setAlignment(Qt.AlignCenter)
-        card.layout.addWidget(date_label)
-
-        card.layout.addStretch()
-
-        # כפתור צפייה
-        view_btn = QPushButton("▶ PLAY VIDEO")
-        view_btn.setFixedHeight(50)
-        view_btn.setCursor(Qt.PointingHandCursor)
-        view_btn.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #00f2fe, stop:1 #4facfe);
-                color: #0d1117;
-                font-weight: 800;
-                border-radius: 12px;
-            }
-            QPushButton:hover { background: white; }
-        """)
-        view_btn.clicked.connect(lambda: self._on_view_clicked(card))
-        card.layout.addWidget(view_btn)
-
-        download_btn = QPushButton("⬇ DOWNLOAD")
-        download_btn.setFixedHeight(50)
-        download_btn.setCursor(Qt.PointingHandCursor)
-        download_btn.setStyleSheet("""
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #43e97b, stop:1 #38f9d7);
-                color: #0d1117;
-                font-weight: 800;
-                border-radius: 12px;    
-            }
-            QPushButton:hover { background: white; }
-        """)
-        download_btn.clicked.connect(lambda: os.startfile(card.video_url) if sys.platform.startswith("win") else os.system(f"open {card.video_url}"))
-        card.layout.addWidget(download_btn)
-
+        # --- Header Section ---
+        header = QHBoxLayout()
+        
+        # תאריך עם אייקון שעון במקום לוח שנה
+        date_lbl = QLabel(f"🕒  {card.saved_at}")
+        date_lbl.setFont(QFont("Segoe UI", 10, QFont.Bold))
+        date_lbl.setStyleSheet("color: #a0aec0; background: transparent; border: none;")
+        header.addWidget(date_lbl)
+        
+        header.addStretch()
+        
         # כפתור מחיקה
-        delete_btn = QPushButton("🗑 Delete Ad")
+        delete_btn = QPushButton("🗑")
+        delete_btn.setFixedSize(30, 30)
         delete_btn.setCursor(Qt.PointingHandCursor)
         delete_btn.setStyleSheet("""
             QPushButton {
-                color: #e74c3c;
-                background: transparent;
+                color: #ff5e57;
+                background: rgba(255, 94, 87, 0.1);
+                border-radius: 6px;
+                font-size: 14px;
                 border: none;
-                font-weight: bold;
             }
-            QPushButton:hover { color: #ff5e57; text-decoration: underline; }
+            QPushButton:hover { background: rgba(255, 94, 87, 0.2); }
         """)
         delete_btn.clicked.connect(lambda: self.delete_ad(card))
-        card.layout.addWidget(delete_btn)
+        header.addWidget(delete_btn)
+        
+        card.layout.addLayout(header)
+
+        # --- Preview Section (Styled Placeholder) ---
+        # עיצוב מחדש של הריבוע השחור שיהיה יפה
+        preview_frame = QFrame()
+        preview_frame.setCursor(Qt.PointingHandCursor)
+        preview_frame.setStyleSheet("""
+            QFrame {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #2b32b2, stop:1 #1488cc);
+                border-radius: 12px;
+                border: 1px solid rgba(255,255,255,0.1);
+            }
+            QFrame:hover {
+                border: 1px solid #00f2fe;
+            }
+        """)
+        preview_frame.setFixedHeight(220)
+        
+        # מאפשר לחיצה על הפריים עצמו
+        preview_frame.mousePressEvent = lambda event: self._on_view_clicked(card)
+        
+        preview_layout = QVBoxLayout(preview_frame)
+        
+        # הוספת אייקון באמצע כדי שלא יהיה רק "שחור"
+        icon_lbl = QLabel("🎬")
+        icon_lbl.setAlignment(Qt.AlignCenter)
+        icon_lbl.setStyleSheet("font-size: 50px; background: transparent; border: none;")
+        
+        play_lbl = QLabel("Click to Play")
+        play_lbl.setAlignment(Qt.AlignCenter)
+        play_lbl.setStyleSheet("color: rgba(255,255,255,0.7); font-weight: bold; background: transparent; border: none;")
+
+        preview_layout.addStretch()
+        preview_layout.addWidget(icon_lbl)
+        preview_layout.addWidget(play_lbl)
+        preview_layout.addStretch()
+        
+        card.layout.addWidget(preview_frame)
+
+        # --- Action Buttons Section (Big Buttons) ---
+        btns_layout = QHBoxLayout()
+        btns_layout.setSpacing(10)
+        
+        # כפתור Play גדול
+        watch_btn = QPushButton("▶ PLAY")
+        watch_btn.setFixedHeight(45)
+        watch_btn.setCursor(Qt.PointingHandCursor)
+        watch_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        watch_btn.setStyleSheet("""
+            QPushButton {
+                background: white;
+                color: #0d1117;
+                font-weight: 800;
+                border-radius: 10px;
+                font-size: 14px;
+            }
+            QPushButton:hover { background: #e0e0e0; }
+        """)
+        watch_btn.clicked.connect(lambda: self._on_view_clicked(card))
+        btns_layout.addWidget(watch_btn)
+
+        # כפתור הורדה גדול
+        download_btn = QPushButton("⬇ DOWNLOAD")
+        download_btn.setFixedHeight(45)
+        download_btn.setCursor(Qt.PointingHandCursor)
+        download_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        download_btn.setStyleSheet("""
+            QPushButton {
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
+                font-weight: bold;
+                border-radius: 10px;
+                border: 1px solid rgba(255,255,255,0.2);
+                font-size: 13px;
+            }
+            QPushButton:hover { background: rgba(255, 255, 255, 0.2); color: #00f2fe; border: 1px solid #00f2fe; }
+        """)
+        download_btn.clicked.connect(lambda: os.startfile(card.video_url) if sys.platform.startswith("win") else os.system(f"open {card.video_url}"))
+        btns_layout.addWidget(download_btn)
+
+        card.layout.addLayout(btns_layout)
 
     def _build_card_video(self, card):
         self._clear_layout(card.layout)
 
-        # כפתור סגירה (X)
+        # Header with Playing text and Close button
         top_bar = QHBoxLayout()
-        close_btn = QPushButton("✕ Close")
-        close_btn.setStyleSheet("color: #a0aec0; background: transparent; border: none; font-weight: bold;")
+        playing_lbl = QLabel("▶ Now Playing")
+        playing_lbl.setStyleSheet("color: #00f2fe; font-weight: bold; border: none; background: transparent;")
+        
+        close_btn = QPushButton("✕ STOP")
+        close_btn.setCursor(Qt.PointingHandCursor)
+        close_btn.setFixedSize(70, 28)
+        close_btn.setStyleSheet("""
+            QPushButton {
+                background: rgba(255, 0, 0, 0.2);
+                color: #ff5e57;
+                border-radius: 6px;
+                font-weight: bold;
+                border: none;
+                font-size: 12px;
+            }
+            QPushButton:hover { background: rgba(255, 0, 0, 0.4); }
+        """)
         close_btn.clicked.connect(lambda: self._close_card_video(card))
+        
+        top_bar.addWidget(playing_lbl)
         top_bar.addStretch()
         top_bar.addWidget(close_btn)
         card.layout.addLayout(top_bar)
 
-        # ווידג'ט הוידאו
-        card.video_widget = QVideoWidget()
-        card.video_widget.setStyleSheet("background-color: black; border-radius: 10px;")
-        card.video_widget.setMinimumHeight(220)
-        card.layout.addWidget(card.video_widget)
+        # Video Frame
+        video_frame = QFrame()
+        video_frame.setFixedHeight(300) 
+        video_frame.setStyleSheet("""
+            QFrame {
+                background-color: black;
+                border-radius: 12px;
+                border: 1px solid #333;
+            }
+        """)
+        card.layout.addWidget(video_frame)
+        card.video_widget = video_frame 
 
-        # הורדה וטעינה של הוידאו
+        # Load Video Logic
         temp_path = os.path.join(tempfile.gettempdir(), f"history_{card.ad_id}.mp4")
         if not os.path.exists(temp_path):
             try:
@@ -274,10 +345,14 @@ class AdHistoryScreen(QWidget):
         media = card.vlc_instance.media_new(temp_path)
         media.add_option("input-repeat=9999")
         card.vlc_player.set_media(media)
-        self._bind_vlc(card)
+        
+        win_id = int(video_frame.winId())
+        if sys.platform.startswith("win"): card.vlc_player.set_hwnd(win_id)
+        elif sys.platform.startswith("linux"): card.vlc_player.set_xwindow(win_id)
+        elif sys.platform == "darwin": card.vlc_player.set_nsobject(win_id)
+        
         card.vlc_player.play()
 
-    # event handlers logic
     def _on_view_clicked(self, card):
         if not card.is_playing:
             card.is_playing = True
@@ -295,12 +370,6 @@ class AdHistoryScreen(QWidget):
             if card.vlc_player.is_playing(): card.vlc_player.stop()
             if handle_delete_ad(card.ad_id): self.load_ads(self.username)
 
-    def _bind_vlc(self, card):
-        win_id = int(card.video_widget.winId())
-        if sys.platform.startswith("win"): card.vlc_player.set_hwnd(win_id)
-        elif sys.platform.startswith("linux"): card.vlc_player.set_xwindow(win_id)
-        elif sys.platform == "darwin": card.vlc_player.set_nsobject(win_id)
-
     def _clear_layout(self, layout):
         while layout.count():
             item = layout.takeAt(0)
@@ -308,6 +377,9 @@ class AdHistoryScreen(QWidget):
             elif item.layout(): self._clear_layout(item.layout())
 
     def go_back(self):
+        for i in range(self.grid.count()):
+            w = self.grid.itemAt(i).widget()
+            if hasattr(w, "vlc_player"): w.vlc_player.stop()
         self.parent.setCurrentWidget(self.parent.user_home_screen)
 
     def closeEvent(self, event):

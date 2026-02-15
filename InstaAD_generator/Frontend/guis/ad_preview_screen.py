@@ -31,6 +31,9 @@ class Particle:
         if self.y < 0 or self.y > height: self.vy *= -1
 
 class AdPreviewScreen(QWidget):
+    # זיכרון סטטי שישמור את כל הכתובות של הסרטונים שכבר שמרנו כדי למנוע שמירה כפולה
+    saved_video_urls = set()
+
     def __init__(self, task_id: str, keywords: list[str], username: str, go_back_callback):
         super().__init__()
         self.task_id = task_id
@@ -48,7 +51,7 @@ class AdPreviewScreen(QWidget):
         self.gradient_offset = 0
         self.timer_anim = QTimer(self)
         self.timer_anim.timeout.connect(self.update_frame)
-        self.timer_anim.start(30)
+        self.timer_anim.start(50) 
 
     def update_frame(self):
         self.gradient_offset += 0.005
@@ -89,6 +92,8 @@ class AdPreviewScreen(QWidget):
             QLabel { border: none; background: transparent; color: white; }
         """)
         
+        self.card.setAutoFillBackground(True)
+        
         card_layout = QVBoxLayout(self.card)
         card_layout.setContentsMargins(40, 40, 40, 40)
         card_layout.setSpacing(20)
@@ -108,52 +113,97 @@ class AdPreviewScreen(QWidget):
         header_layout.addWidget(self.status_label)
         card_layout.addLayout(header_layout)
 
-        # נגן הוידאו (מוסתר בהתחלה)
+        # נגן הוידאו
         self.video_widget = QVideoWidget()
         self.video_widget.setMinimumHeight(300)
         self.video_widget.setStyleSheet("background-color: black; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);")
         self.video_widget.hide()
         card_layout.addWidget(self.video_widget)
 
-        # כפתורי פעולה
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(80)
+        shadow.setColor(QColor(0, 0, 0, 180))
+        self.card.setGraphicsEffect(shadow)
+        main_layout.addWidget(self.card)
+
+        # אזור כפתורים + פידבק
+        feedback_container = QFrame()
+        feedback_container.setFixedWidth(700)
+        feedback_container.setStyleSheet("""
+            QFrame {
+                background-color: rgba(255, 255, 255, 0.07);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 20px;
+                padding: 20px;
+            }
+        """)
+        
+        feedback_layout = QVBoxLayout(feedback_container)
+        feedback_layout.setContentsMargins(20, 20, 20, 20)
+        feedback_layout.setSpacing(15)
+        
         btns_layout = QHBoxLayout()
+        btns_layout.setSpacing(15)
+        
         self.try_again_btn = QPushButton("↺ Regenerate")
         self.save_btn = QPushButton("💾 Save to Gallery")
         self.save_btn.setEnabled(False)
+        self.try_again_btn.setCursor(Qt.PointingHandCursor)
+        self.save_btn.setCursor(Qt.PointingHandCursor)
+        
+        self.try_again_btn.setMinimumHeight(50)
+        self.save_btn.setMinimumHeight(50)
 
-        btn_style = """
+        self.try_again_btn.setStyleSheet("""
             QPushButton {
                 background: rgba(255, 255, 255, 0.1);
-                color: white; border-radius: 12px;
-                padding: 12px; font-weight: bold; font-size: 14px;
+                color: white; 
+                border-radius: 25px;
+                border: none;
+                padding: 12px 20px; 
+                font-weight: bold; 
+                font-size: 14px;
             }
             QPushButton:hover { background: rgba(255, 255, 255, 0.2); }
             QPushButton:disabled { color: rgba(255,255,255,0.2); background: transparent; }
-        """
-        self.try_again_btn.setStyleSheet(btn_style)
-        self.save_btn.setStyleSheet(btn_style.replace("rgba(255, 255, 255, 0.1)", "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #00f2fe, stop:1 #4facfe)").replace("color: white", "color: #0d1117"))
+        """)
+        
+        self.save_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #00f2fe, stop:1 #4facfe);
+                color: #0d1117;
+                border-radius: 25px;
+                border: none;
+                padding: 12px 20px; 
+                font-weight: bold; 
+                font-size: 14px;
+            }
+            QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #4facfe, stop:1 #00f2fe); }
+            QPushButton:disabled { color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); }
+        """)
         
         btns_layout.addWidget(self.try_again_btn)
         btns_layout.addWidget(self.save_btn)
-        card_layout.addLayout(btns_layout)
-
-        # אזור פידבק
-        feedback_container = QVBoxLayout()
-        feedback_label = QLabel("Improve next results:")
-        feedback_label.setStyleSheet("color: #a0aec0; font-size: 11px; font-weight: bold;")
+        feedback_layout.addLayout(btns_layout)
         
         self.feedback_input = QTextEdit()
         self.feedback_input.setPlaceholderText("Notes for the AI (e.g. 'Make it more energetic', 'Change lighting')...")
         self.feedback_input.setFixedHeight(80)
         self.feedback_input.setEnabled(False)
+        
         self.feedback_input.setStyleSheet("""
             QTextEdit {
-                background-color: rgba(0, 0, 0, 0.2);
+                background-color: #1a1a2e;
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 border-radius: 10px;
-                color: white;
+                color: #ffffff;
                 padding: 10px;
+                font-size: 14px;
+                font-family: 'Segoe UI';
             }
+            QTextEdit:hover { border: 1px solid rgba(0, 242, 254, 0.7); }
+            QTextEdit:focus { border: 2px solid #00f2fe; background-color: #202040; }
+            QTextEdit:disabled { color: #666666; background-color: rgba(0,0,0,0.2); }
         """)
         
         self.submit_feedback_btn = QPushButton("Submit Optimization")
@@ -162,33 +212,30 @@ class AdPreviewScreen(QWidget):
         self.submit_feedback_btn.setStyleSheet("""
             QPushButton {
                 background: transparent; color: #00f2fe; border: 1px solid #00f2fe; 
-                border-radius: 8px; font-size: 12px; font-weight: bold; padding: 5px;
+                border-radius: 8px; font-size: 12px; font-weight: bold; padding: 8px;
             }
-            QPushButton:hover { background: rgba(0, 242, 254, 0.1); }
+            QPushButton:hover { background: rgba(0, 242, 254, 0.2); color: white; }
+            QPushButton:disabled { color: #555; border-color: #555; }
         """)
         
-        feedback_container.addWidget(feedback_label)
-        feedback_container.addWidget(self.feedback_input)
-        feedback_container.addWidget(self.submit_feedback_btn)
-        card_layout.addLayout(feedback_container)
+        feedback_layout.addWidget(self.feedback_input)
+        feedback_layout.addWidget(self.submit_feedback_btn)
+        
+        feedback_shadow = QGraphicsDropShadowEffect()
+        feedback_shadow.setBlurRadius(40)
+        feedback_shadow.setColor(QColor(0, 0, 0, 120))
+        feedback_container.setGraphicsEffect(feedback_shadow)
+        
+        main_layout.addWidget(feedback_container)
 
+        self.feedback_input.textChanged.connect(self.on_feedback_text_changed)
         self.submit_feedback_btn.clicked.connect(self.submit_feedback)
         self.try_again_btn.clicked.connect(self.on_try_again)
         self.save_btn.clicked.connect(self.save_ad)
 
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(80)
-        shadow.setColor(QColor(0, 0, 0, 180))
-        self.card.setGraphicsEffect(shadow)
-        main_layout.addWidget(self.card)
-
-        # VLC
         self.vlc_instance = vlc.Instance("--no-xlib", "--quiet")
         self.vlc_player = self.vlc_instance.media_player_new()
 
-    # ======================
-    # הלוגיקה שלך (ללא שינוי)
-    # ======================
     def start_polling(self):
         self.poll_timer = QTimer()
         self.poll_timer.timeout.connect(self.check_status)
@@ -215,28 +262,15 @@ class AdPreviewScreen(QWidget):
         self.current_video_url = url
         self.status_label.setText("✅ Masterpiece Ready!")
 
-        # video local download
         r = requests.get(url, stream=True)
         temp_path = os.path.join(tempfile.gettempdir(), f"{self.task_id}.mp4")
         with open(temp_path, "wb") as f:
             for chunk in r.iter_content(1024 * 1024):
                 f.write(chunk)
 
-        # extra space for video and feedback
-        EXTRA_HEIGHT = 120
-
         self.video_widget.show()
-
-        # window height adjustment
-        self.resize(self.width(), self.height() + EXTRA_HEIGHT)
-
-        # card height adjustment
-        self.card.setMinimumHeight(self.card.height() + EXTRA_HEIGHT)
-
-        # request layout update
-        self.card.adjustSize()
-        self.adjustSize()
-        # ========================================
+        current_height = self.height()
+        self.resize(self.width(), current_height + 320)
 
         media = self.vlc_instance.media_new(temp_path)
         media.add_option("input-repeat=9999")
@@ -244,10 +278,16 @@ class AdPreviewScreen(QWidget):
         self._bind_vlc_to_widget()
         self.vlc_player.play()
 
-        self.save_btn.setEnabled(True)
-        self.feedback_input.setEnabled(True)
-        self.submit_feedback_btn.setEnabled(True)
+        # בדיקה: האם הסרטון הזה כבר נשמר בעבר (בזיכרון שלנו)?
+        if self.current_video_url in AdPreviewScreen.saved_video_urls:
+            self.save_btn.setText("💾 Saved")
+            self.save_btn.setEnabled(False)
+        else:
+            self.save_btn.setText("💾 Save to Gallery")
+            self.save_btn.setEnabled(True)
 
+        self.feedback_input.setEnabled(True)
+        self.submit_feedback_btn.setEnabled(False)  
 
     def _bind_vlc_to_widget(self):
         win_id = int(self.video_widget.winId())
@@ -261,21 +301,49 @@ class AdPreviewScreen(QWidget):
         self.close()
         self.go_back_callback()
 
+    def on_feedback_text_changed(self):
+        text = self.feedback_input.toPlainText().strip()
+        self.submit_feedback_btn.setEnabled(bool(text))
+
     def save_ad(self):
         result = handle_save_ad(username=self.username, task_id=self.task_id, video_url=self.current_video_url)
-        self.status_label.setText(result["message"])
+        message = result.get("message", "Unknown status")
+        
+        if result.get("success", False) or "success" in message.lower() or "saved" in message.lower():
+            # מוסיף את הסרטון לזיכרון הסטטי שלנו
+            AdPreviewScreen.saved_video_urls.add(self.current_video_url)
+            
+            QMessageBox.information(self, "Gallery", "✅ Video saved to gallery successfully!")
+            self.status_label.setText("✅ Saved to Gallery")
+            self.save_btn.setText("💾 Saved")
+            self.save_btn.setEnabled(False) 
+            
+        elif "already" in message.lower() or "קיים" in message:
+            # מוסיף את הסרטון לזיכרון הסטטי שלנו, למקרה שהשרת אמר שזה כבר שמור
+            AdPreviewScreen.saved_video_urls.add(self.current_video_url)
+            
+            QMessageBox.information(self, "Gallery", "ℹ️ This video is already saved in your gallery.")
+            self.status_label.setText("ℹ️ Already in Gallery")
+            self.save_btn.setText("💾 Saved")
+            self.save_btn.setEnabled(False) 
+            
+        else:
+            QMessageBox.warning(self, "Save Failed", f"❌ {message}")
+            self.status_label.setText(message)
 
     def submit_feedback(self):
         self.feedback_text = self.feedback_input.toPlainText().strip()
         if not self.feedback_text:
             QMessageBox.warning(self, "Feedback", "Please enter feedback before submitting.")
             return
+        
         result = handle_submit_feedback(user_id=self.username, feedback=self.feedback_text)
         if result["success"]:
             QMessageBox.information(self, "Feedback", result["message"])
             self.feedback_input.clear()
             self.submit_feedback_btn.setEnabled(False)
-        else: QMessageBox.warning(self, "Feedback", result["message"])
+        else: 
+            QMessageBox.warning(self, "Feedback", result["message"])
 
     def closeEvent(self, event):
         if self.vlc_player.is_playing(): self.vlc_player.stop()

@@ -52,6 +52,7 @@ def check_if_server_is_running():
         return False
 
 # ==========================================
+
 # Main Application (GUI)
 # ==========================================
 class MainApp(QStackedWidget):
