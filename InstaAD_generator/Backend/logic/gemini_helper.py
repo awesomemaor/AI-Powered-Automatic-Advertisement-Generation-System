@@ -7,7 +7,6 @@ load_dotenv()
 
 # Load Gemini API key from environment variables
 GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
-print("GEMINI_API_KEY:", GEMINI_API_KEY)
 
 def enhance_prompt_with_gemini(user_input: str):
     # check if key available
@@ -18,9 +17,6 @@ def enhance_prompt_with_gemini(user_input: str):
     try:
         # Initialize Gemini client
         client = genai.Client(api_key=GEMINI_API_KEY)
-
-        for model in client.models.list():
-            print(f"Available model: {model.name} - {model.description}")
        
         system_instruction = """
         You are an expert AI Video Prompt Engineer.
