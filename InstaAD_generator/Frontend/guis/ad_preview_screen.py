@@ -31,9 +31,6 @@ class Particle:
         if self.y < 0 or self.y > height: self.vy *= -1
 
 class AdPreviewScreen(QWidget):
-    # זיכרון סטטי שישמור את כל הכתובות של הסרטונים שכבר שמרנו כדי למנוע שמירה כפולה
-    saved_video_urls = set()
-
     def __init__(self, task_id: str, keywords: list[str], username: str, go_back_callback):
         super().__init__()
         self.task_id = task_id
@@ -47,11 +44,11 @@ class AdPreviewScreen(QWidget):
         self.initUI()
         self.start_polling()
         
-        # אנימציה לרקע
+        # אנימציה לרקע - האטה מ-30ms ל-50ms
         self.gradient_offset = 0
         self.timer_anim = QTimer(self)
         self.timer_anim.timeout.connect(self.update_frame)
-        self.timer_anim.start(50) 
+        self.timer_anim.start(50)  
 
     def update_frame(self):
         self.gradient_offset += 0.005
@@ -80,7 +77,7 @@ class AdPreviewScreen(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setAlignment(Qt.AlignCenter)
 
-        # כרטיס הזכוכית
+        # ========== כרטיס הזכוכית (כותרת ווידאו) ==========
         self.card = QFrame()
         self.card.setFixedWidth(700)
         self.card.setStyleSheet("""
@@ -91,14 +88,12 @@ class AdPreviewScreen(QWidget):
             }
             QLabel { border: none; background: transparent; color: white; }
         """)
-        
         self.card.setAutoFillBackground(True)
         
         card_layout = QVBoxLayout(self.card)
         card_layout.setContentsMargins(40, 40, 40, 40)
         card_layout.setSpacing(20)
 
-        # כותרת וסטטוס
         header_layout = QVBoxLayout()
         self.title = QLabel("AI Video Premiere")
         self.title.setFont(QFont("Segoe UI", 26, QFont.Bold))
@@ -113,7 +108,6 @@ class AdPreviewScreen(QWidget):
         header_layout.addWidget(self.status_label)
         card_layout.addLayout(header_layout)
 
-        # נגן הוידאו
         self.video_widget = QVideoWidget()
         self.video_widget.setMinimumHeight(300)
         self.video_widget.setStyleSheet("background-color: black; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);")
@@ -126,7 +120,7 @@ class AdPreviewScreen(QWidget):
         self.card.setGraphicsEffect(shadow)
         main_layout.addWidget(self.card)
 
-        # אזור כפתורים + פידבק
+        # ========== אזור כפתורים + פידבק ==========
         feedback_container = QFrame()
         feedback_container.setFixedWidth(700)
         feedback_container.setStyleSheet("""
@@ -262,6 +256,7 @@ class AdPreviewScreen(QWidget):
         self.current_video_url = url
         self.status_label.setText("✅ Masterpiece Ready!")
 
+        # video local download
         r = requests.get(url, stream=True)
         temp_path = os.path.join(tempfile.gettempdir(), f"{self.task_id}.mp4")
         with open(temp_path, "wb") as f:
@@ -269,6 +264,8 @@ class AdPreviewScreen(QWidget):
                 f.write(chunk)
 
         self.video_widget.show()
+        
+        # הגדלת החלון למניעת חיתוך
         current_height = self.height()
         self.resize(self.width(), current_height + 320)
 
@@ -278,14 +275,8 @@ class AdPreviewScreen(QWidget):
         self._bind_vlc_to_widget()
         self.vlc_player.play()
 
-        # בדיקה: האם הסרטון הזה כבר נשמר בעבר (בזיכרון שלנו)?
-        if self.current_video_url in AdPreviewScreen.saved_video_urls:
-            self.save_btn.setText("💾 Saved")
-            self.save_btn.setEnabled(False)
-        else:
-            self.save_btn.setText("💾 Save to Gallery")
-            self.save_btn.setEnabled(True)
-
+        # הפעלת הפידבק והשמירה - בדיוק כמו במקור!
+        self.save_btn.setEnabled(True)
         self.feedback_input.setEnabled(True)
         self.submit_feedback_btn.setEnabled(False)  
 
@@ -302,34 +293,19 @@ class AdPreviewScreen(QWidget):
         self.go_back_callback()
 
     def on_feedback_text_changed(self):
+        """מטפל בשינויים בטקסט ומוודא שהטקסט נראה"""
         text = self.feedback_input.toPlainText().strip()
         self.submit_feedback_btn.setEnabled(bool(text))
 
     def save_ad(self):
         result = handle_save_ad(username=self.username, task_id=self.task_id, video_url=self.current_video_url)
-        message = result.get("message", "Unknown status")
         
-        if result.get("success", False) or "success" in message.lower() or "saved" in message.lower():
-            # מוסיף את הסרטון לזיכרון הסטטי שלנו
-            AdPreviewScreen.saved_video_urls.add(self.current_video_url)
-            
-            QMessageBox.information(self, "Gallery", "✅ Video saved to gallery successfully!")
+        if result.get("success", False) or "success" in result.get("message", "").lower():
+            QMessageBox.information(self, "Success", "✅ Video saved to gallery successfully!")
             self.status_label.setText("✅ Saved to Gallery")
-            self.save_btn.setText("💾 Saved")
-            self.save_btn.setEnabled(False) 
-            
-        elif "already" in message.lower() or "קיים" in message:
-            # מוסיף את הסרטון לזיכרון הסטטי שלנו, למקרה שהשרת אמר שזה כבר שמור
-            AdPreviewScreen.saved_video_urls.add(self.current_video_url)
-            
-            QMessageBox.information(self, "Gallery", "ℹ️ This video is already saved in your gallery.")
-            self.status_label.setText("ℹ️ Already in Gallery")
-            self.save_btn.setText("💾 Saved")
-            self.save_btn.setEnabled(False) 
-            
         else:
-            QMessageBox.warning(self, "Save Failed", f"❌ {message}")
-            self.status_label.setText(message)
+            QMessageBox.warning(self, "Save Failed", result["message"])
+            self.status_label.setText(result["message"])
 
     def submit_feedback(self):
         self.feedback_text = self.feedback_input.toPlainText().strip()

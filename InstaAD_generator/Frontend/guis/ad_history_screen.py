@@ -74,10 +74,10 @@ class AdHistoryScreen(QWidget):
         self.main_layout.setContentsMargins(40, 40, 40, 40)
         self.main_layout.setSpacing(25)
 
-        # Header
+        # Header - תוקן החיתוך של כפתור ה-Back
         header_layout = QHBoxLayout()
         back_btn = QPushButton("← Back")
-        back_btn.setFixedSize(100, 40)
+        back_btn.setFixedHeight(40) # רק גובה קבוע, הרוחב חופשי לפי הטקסט
         back_btn.setCursor(Qt.PointingHandCursor)
         back_btn.setStyleSheet("""
             QPushButton {
@@ -86,20 +86,21 @@ class AdHistoryScreen(QWidget):
                 border: 1px solid rgba(255, 255, 255, 0.2);
                 border-radius: 12px;
                 font-weight: bold;
+                padding: 0px 20px; /* מוסיף ריווח אסתטי מהצדדים */
             }
             QPushButton:hover { background: rgba(255, 255, 255, 0.2); }
         """)
         back_btn.clicked.connect(self.go_back)
         header_layout.addWidget(back_btn)
-        header_layout.addStretch()
+        
+        header_layout.addStretch() 
 
         title = QLabel("Advertisement Gallery")
         title.setFont(QFont("Segoe UI", 28, QFont.Bold))
         title.setStyleSheet("color: white; border: none; background: transparent;")
         header_layout.addWidget(title)
         
-        header_layout.addStretch()
-        header_layout.addSpacing(100) 
+        header_layout.addStretch() 
 
         self.main_layout.addLayout(header_layout)
 
@@ -114,8 +115,10 @@ class AdHistoryScreen(QWidget):
 
         self.container = QWidget()
         self.container.setStyleSheet("background: transparent;")
+        
         self.grid = QGridLayout()
         self.grid.setSpacing(30)
+        self.grid.setAlignment(Qt.AlignTop) 
         self.container.setLayout(self.grid)
         self.scroll.setWidget(self.container)
         
@@ -148,7 +151,7 @@ class AdHistoryScreen(QWidget):
 
     def create_ad_card(self, ad: dict):
         card = QFrame()
-        card.setMinimumHeight(380)
+        card.setFixedHeight(400) 
         card.setStyleSheet("""
             QFrame {
                 background-color: rgba(30, 30, 40, 0.7);
@@ -183,7 +186,6 @@ class AdHistoryScreen(QWidget):
         # --- Header Section ---
         header = QHBoxLayout()
         
-        # תאריך עם אייקון שעון במקום לוח שנה
         date_lbl = QLabel(f"🕒  {card.saved_at}")
         date_lbl.setFont(QFont("Segoe UI", 10, QFont.Bold))
         date_lbl.setStyleSheet("color: #a0aec0; background: transparent; border: none;")
@@ -191,27 +193,28 @@ class AdHistoryScreen(QWidget):
         
         header.addStretch()
         
-        # כפתור מחיקה
-        delete_btn = QPushButton("🗑")
-        delete_btn.setFixedSize(30, 30)
+        # כפתור מחיקה - הרוחב דינמי עם padding כדי למנוע חיתוך
+        delete_btn = QPushButton("✖ Delete")
+        delete_btn.setFixedHeight(32)
         delete_btn.setCursor(Qt.PointingHandCursor)
         delete_btn.setStyleSheet("""
             QPushButton {
-                color: #ff5e57;
-                background: rgba(255, 94, 87, 0.1);
+                color: white;
+                background: #ff4757;
                 border-radius: 6px;
-                font-size: 14px;
+                font-size: 13px;
+                font-weight: bold;
                 border: none;
+                padding: 0px 15px;
             }
-            QPushButton:hover { background: rgba(255, 94, 87, 0.2); }
+            QPushButton:hover { background: #ff6b81; }
         """)
         delete_btn.clicked.connect(lambda: self.delete_ad(card))
         header.addWidget(delete_btn)
         
         card.layout.addLayout(header)
 
-        # --- Preview Section (Styled Placeholder) ---
-        # עיצוב מחדש של הריבוע השחור שיהיה יפה
+        # --- Preview Section ---
         preview_frame = QFrame()
         preview_frame.setCursor(Qt.PointingHandCursor)
         preview_frame.setStyleSheet("""
@@ -226,12 +229,10 @@ class AdHistoryScreen(QWidget):
         """)
         preview_frame.setFixedHeight(220)
         
-        # מאפשר לחיצה על הפריים עצמו
         preview_frame.mousePressEvent = lambda event: self._on_view_clicked(card)
         
         preview_layout = QVBoxLayout(preview_frame)
         
-        # הוספת אייקון באמצע כדי שלא יהיה רק "שחור"
         icon_lbl = QLabel("🎬")
         icon_lbl.setAlignment(Qt.AlignCenter)
         icon_lbl.setStyleSheet("font-size: 50px; background: transparent; border: none;")
@@ -247,12 +248,11 @@ class AdHistoryScreen(QWidget):
         
         card.layout.addWidget(preview_frame)
 
-        # --- Action Buttons Section (Big Buttons) ---
+        # --- Action Buttons Section ---
         btns_layout = QHBoxLayout()
         btns_layout.setSpacing(10)
         
-        # כפתור Play גדול
-        watch_btn = QPushButton("▶ PLAY")
+        watch_btn = QPushButton("PLAY VIDEO")
         watch_btn.setFixedHeight(45)
         watch_btn.setCursor(Qt.PointingHandCursor)
         watch_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -269,8 +269,7 @@ class AdHistoryScreen(QWidget):
         watch_btn.clicked.connect(lambda: self._on_view_clicked(card))
         btns_layout.addWidget(watch_btn)
 
-        # כפתור הורדה גדול
-        download_btn = QPushButton("⬇ DOWNLOAD")
+        download_btn = QPushButton("DOWNLOAD")
         download_btn.setFixedHeight(45)
         download_btn.setCursor(Qt.PointingHandCursor)
         download_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -298,19 +297,21 @@ class AdHistoryScreen(QWidget):
         playing_lbl = QLabel("▶ Now Playing")
         playing_lbl.setStyleSheet("color: #00f2fe; font-weight: bold; border: none; background: transparent;")
         
-        close_btn = QPushButton("✕ STOP")
+        # כפתור סגירה (STOP) - הרוחב דינמי עם padding כדי למנוע חיתוך
+        close_btn = QPushButton("◼ STOP")
         close_btn.setCursor(Qt.PointingHandCursor)
-        close_btn.setFixedSize(70, 28)
+        close_btn.setFixedHeight(32)
         close_btn.setStyleSheet("""
             QPushButton {
-                background: rgba(255, 0, 0, 0.2);
-                color: #ff5e57;
+                background: #ff4757;
+                color: white;
                 border-radius: 6px;
                 font-weight: bold;
                 border: none;
-                font-size: 12px;
+                font-size: 13px;
+                padding: 0px 15px;
             }
-            QPushButton:hover { background: rgba(255, 0, 0, 0.4); }
+            QPushButton:hover { background: #ff6b81; }
         """)
         close_btn.clicked.connect(lambda: self._close_card_video(card))
         
@@ -321,7 +322,7 @@ class AdHistoryScreen(QWidget):
 
         # Video Frame
         video_frame = QFrame()
-        video_frame.setFixedHeight(300) 
+        video_frame.setFixedHeight(280) 
         video_frame.setStyleSheet("""
             QFrame {
                 background-color: black;
@@ -332,7 +333,7 @@ class AdHistoryScreen(QWidget):
         card.layout.addWidget(video_frame)
         card.video_widget = video_frame 
 
-        # Load Video Logic
+        # Load Video Logic (ללא שינוי)
         temp_path = os.path.join(tempfile.gettempdir(), f"history_{card.ad_id}.mp4")
         if not os.path.exists(temp_path):
             try:
@@ -371,10 +372,17 @@ class AdHistoryScreen(QWidget):
             if handle_delete_ad(card.ad_id): self.load_ads(self.username)
 
     def _clear_layout(self, layout):
-        while layout.count():
-            item = layout.takeAt(0)
-            if item.widget(): item.widget().deleteLater()
-            elif item.layout(): self._clear_layout(item.layout())
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+                else:
+                    sub_layout = item.layout()
+                    if sub_layout:
+                        self._clear_layout(sub_layout)
+                        sub_layout.deleteLater()
 
     def go_back(self):
         for i in range(self.grid.count()):
