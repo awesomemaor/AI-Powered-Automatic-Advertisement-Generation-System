@@ -201,6 +201,11 @@ class LoginScreen(QWidget):
     # logic functions
     def go_back(self):
         self.parent.setCurrentWidget(self.parent.welcome_screen)
+    
+    def clear_inputs(self):
+        # clearing the input fields when logging out or going back to welcome screen
+        self.username_input.clear()
+        self.password_input.clear()
 
     def try_login(self):
         username = self.username_input.text()
@@ -227,9 +232,11 @@ class LoginScreen(QWidget):
             msg.setIcon(QMessageBox.Information)
             msg.exec_()
 
+            # making the user home screen with the logged in username and passing it to the main app so it can be accessed from other screens
             from guis.userHome_screen import UserHomeScreen
             user_home = UserHomeScreen(self.parent, self.username_input.text())
 
+            # passing the user home screen instance to the main app so it can be accessed from other screens (like generate screen and ad history screen) to update the username there as well and to switch to it after login
             self.parent.user_home_screen = user_home
             self.parent.generate_screen.user_home_screen = user_home
             self.parent.addWidget(user_home)

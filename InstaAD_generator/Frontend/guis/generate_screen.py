@@ -235,8 +235,19 @@ class GenerateScreen(QWidget):
         self.loading_overlay.hide()          # hide initially 
 
     def on_logout(self):
-        logout_user_request(self.username)
-        self.parent.setCurrentWidget(self.parent.welcome_screen)
+        result = logout_user_request(self.username)
+        if result["success"]:
+            msg = QMessageBox(self)
+            msg.setIcon(QMessageBox.Information)
+            msg.setText("Logged out successfully!")
+            msg.exec_()
+
+            # clearing the input fields of this screen and the user home screen (if exists) to avoid showing old data when returning to these screens
+            self.clear_inputs() 
+            if hasattr(self.parent, 'login_screen'):
+                self.parent.login_screen.clear_inputs()
+
+            self.parent.setCurrentWidget(self.parent.welcome_screen)
 
     # manual ad creation flow
     def on_generate_clicked(self):
@@ -281,6 +292,10 @@ class GenerateScreen(QWidget):
             
         # 3. Check for server/API errors
         QMessageBox.critical(self, "Error", result.get("message", "Video generation failed"))
+
+    def clear_inputs(self):
+        # clearing the input fields when logging out or going back to welcome screen
+        self.prompt_input.clear()
 
     # close the preview and return to this screen
     def return_from_preview(self):

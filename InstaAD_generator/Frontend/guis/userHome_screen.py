@@ -26,7 +26,7 @@ class GenerateThread(QThread):
             mode=self.mode
         )
         self.finished.emit(result)
-
+    
 # מחלקת חלקיקים
 class Particle:
     def __init__(self, width, height):
@@ -210,6 +210,7 @@ class UserHomeScreen(QWidget):
         self.gen_thread.finished.connect(self.on_generate_finished)
         self.gen_thread.start()
 
+    # after the generation thread finishes, this function is called with the result
     def on_generate_finished(self, result):
         self.loading_overlay.hide()
 
@@ -230,16 +231,35 @@ class UserHomeScreen(QWidget):
         self.preview_window.show()
 
     def return_from_preview(self):
-        """נקראת כשהמשתמש לוחץ Try Again"""
+        # when the user clicks "Back" this function triggeres.
         if self.preview_window:
             self.preview_window.close()
             self.preview_window = None
         self.show()
 
     def advertisement_history(self):
-        self.parent.ad_history_screen.load_ads(self.username)
-        self.parent.setCurrentWidget(self.parent.ad_history_screen)
+        # 1. Show the loading overlay
+        self.loading_overlay.setText("📂 Loading your saved ads...")
+        self.loading_overlay.show()
+        
+        # 2. The Trick: Wait 100ms to allow the UI to render the loading screen
+        # before executing the actual loading function
+        QTimer.singleShot(100, self.execute_history_loading)
 
+    def execute_history_loading(self):
+        try:
+            # Perform the actual loading operation (safe on main thread)
+            self.parent.ad_history_screen.load_ads(self.username)
+            
+            # Switch to the history screen
+            self.parent.setCurrentWidget(self.parent.ad_history_screen)
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Could not load history: {e}")
+        finally:
+            # 3. Hide the loading overlay when done
+            self.loading_overlay.hide()
+
+    # Logout function
     def logout_clicked(self):
         result = logout_user_request(self.username)
         if result["success"]:
@@ -247,4 +267,12 @@ class UserHomeScreen(QWidget):
             msg.setIcon(QMessageBox.Information)
             msg.setText("Logged out successfully!")
             msg.exec_()
+
+            # clearing the input fields of this screen and the login screen to avoid showing old data when returning to these screens
+            if hasattr(self.parent, 'login_screen'):
+                self.parent.login_screen.clear_inputs()
+                
+            if hasattr(self.parent, 'generate_screen'):
+                self.parent.generate_screen.clear_inputs()
+
             self.parent.setCurrentWidget(self.parent.welcome_screen)

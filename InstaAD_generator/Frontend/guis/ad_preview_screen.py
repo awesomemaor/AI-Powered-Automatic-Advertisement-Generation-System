@@ -325,5 +325,16 @@ class AdPreviewScreen(QWidget):
             QMessageBox.warning(self, "Feedback", result["message"])
 
     def closeEvent(self, event):
-        if self.vlc_player.is_playing(): self.vlc_player.stop()
+        # 1. Safety: If the poll timer is active (window closed during generation), stop it
+        if hasattr(self, 'poll_timer') and self.poll_timer.isActive():
+            self.poll_timer.stop()
+            
+        # 2. Stop the video player if it is currently playing
+        if self.vlc_player.is_playing():
+            self.vlc_player.stop()
+
+        # 3. Trigger the callback to restore the previous screen (prevents blank app state)
+        if self.go_back_callback:
+            self.go_back_callback()
+
         event.accept()
