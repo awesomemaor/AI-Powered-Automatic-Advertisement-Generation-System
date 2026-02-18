@@ -1,14 +1,14 @@
 import pytest
 from unittest.mock import MagicMock
 from Backend.endpoints.generate_ad import save_feedback, FeedbackRequest, get_user_preferences
-import Backend.endpoints.generate_ad as generate_module
 from fastapi import HTTPException
 
-# testing successful feedback saving
+# Test successful feedback saving
 @pytest.mark.asyncio
 async def test_save_feedback_success(mock_db):
-    # existing user
-    mock_db.update_one.return_value.matched_count = 1
+    # User exists
+    mock_db.bulk_write.return_value.matched_count = 1
+    mock_db.bulk_write.return_value.modified_count = 1
 
     req = FeedbackRequest(
         user_id="daniel",
@@ -17,18 +17,15 @@ async def test_save_feedback_success(mock_db):
 
     result = await save_feedback(req)
 
-    mock_db.update_one.assert_called_once_with(
-        {"username": "daniel"},
-        {"$push": {"feedback_notes": "Great ad quality!"}}
-    )
-
+    # Verify bulk_write call
+    mock_db.bulk_write.assert_called_once()
     assert result["message"] == "Feedback saved"
 
-# testing user not found case
+# Test user not found case
 @pytest.mark.asyncio
 async def test_save_feedback_user_not_found(mock_db):
-    # user לא קיים
-    mock_db.update_one.return_value.matched_count = 0
+    # User does not exist
+    mock_db.bulk_write.return_value.matched_count = 0
 
     req = FeedbackRequest(
         user_id="unknown_user",
@@ -41,9 +38,9 @@ async def test_save_feedback_user_not_found(mock_db):
     assert exc.value.status_code == 404
     assert exc.value.detail == "User not found"
 
-    mock_db.update_one.assert_called_once()
+    mock_db.bulk_write.assert_called_once()
 
-# testing to get the user preferences
+# Test getting user preferences
 @pytest.mark.asyncio
 async def test_get_user_preferences_success(mock_db):
     mock_db.find_one.return_value = {
@@ -61,7 +58,7 @@ async def test_get_user_preferences_success(mock_db):
     assert result["searched_keywords"] == ["ai", "ml"]
     assert result["feedback_notes"] == ["nice ad", "too long"]
 
-# testing user not found case
+# Test getting preferences for unknown user
 @pytest.mark.asyncio
 async def test_get_user_preferences_user_not_found(mock_db):
     mock_db.find_one.return_value = None

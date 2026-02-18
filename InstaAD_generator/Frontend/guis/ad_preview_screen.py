@@ -230,11 +230,13 @@ class AdPreviewScreen(QWidget):
         self.vlc_instance = vlc.Instance("--no-xlib", "--quiet")
         self.vlc_player = self.vlc_instance.media_player_new()
 
+    # polling mechanism to check video generation status every second
     def start_polling(self):
         self.poll_timer = QTimer()
         self.poll_timer.timeout.connect(self.check_status)
-        self.poll_timer.start(3000)
+        self.poll_timer.start(1000)
 
+    # checking video generation status and handling the response accordingly
     def check_status(self):
         try:
             response = requests.post("http://127.0.0.1:8000/check-video-status", json={"task_id": self.task_id}, timeout=10)
@@ -252,6 +254,7 @@ class AdPreviewScreen(QWidget):
             else: self.status_label.setText(f"Status: {status}")
         except Exception as e: self.status_label.setText(f"Error: {e}")
 
+    # section to load the video
     def load_video(self, url: str):
         self.current_video_url = url
         self.status_label.setText("✅ Masterpiece Ready!")

@@ -23,9 +23,14 @@ def extract_keywords(prompt: str):
     words = text.split()
 
     stop_words = {
-        "the", "and", "is", "in", "on", "at", "to", "for", "a", "an", "of",
-        "create", "generate", "video", "advertisement", "ad", "promotion",
-        "with", "this", "that", "it", "by", "as", "from", "or", "be"
+        # Common grammar
+        "the", "and", "is", "in", "on", "at", "to", "for", "a", "an", "of", 
+        "with", "this", "that", "it", "by", "as", "from", "or", "be", "are", "will",
+        # Request words 
+        "create", "generate", "make", "produce", "show", "me", "please", 
+        "video", "advertisement", "ad", "promo", "promotion", "clip", "movie", "film",
+        # Adjectives that are too generic 
+        "short", "long", "engaging", "professional", "beautiful", "best", "cool", "hd", "4k"
     }
 
     seen = set()
@@ -191,7 +196,7 @@ def handle_generate(prompt: str | None, user_id: str, mode="manual"):
     # 4. keywords + task
     # -------------------------
     if mode == "manual":
-        keywords = extract_keywords(final_prompt)
+        keywords = extract_keywords(prompt)
         requests.post(
             "http://127.0.0.1:8000/save_keywords",
             json={"user_id": user_id, "keywords": keywords},

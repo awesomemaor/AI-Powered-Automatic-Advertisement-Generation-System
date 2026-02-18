@@ -24,7 +24,7 @@ def enhance_prompt_with_gemini(user_input: str):
         
         Guidelines:
         1. Focus on visual details: lighting, camera angles, texture, atmosphere.
-        2. Keep it under 60 words.
+        2. Keep it under 35 words.
         3. Do NOT add dialogue or script. purely visual description.
         4. Output ONLY the enhanced prompt.
         """

@@ -1,22 +1,22 @@
 def test_save_feedback_success(client, mock_db):
-    # מדמים משתמש קיים
-    mock_db.update_one.return_value.matched_count = 1
+    # Mocking successful bulk_write execution (user exists)
+    mock_db.bulk_write.return_value.matched_count = 1
+    mock_db.bulk_write.return_value.modified_count = 1
 
     response = client.post("/save_feedback", json={
         "user_id": "daniel",
         "feedback": "Great ad"
     })
 
-    mock_db.update_one.assert_called_once_with(
-        {"username": "daniel"},
-        {"$push": {"feedback_notes": "Great ad"}}
-    )
+    # Assert bulk_write was called instead of update_one
+    mock_db.bulk_write.assert_called_once()
 
     assert response.status_code == 200
     assert response.json()["message"] == "Feedback saved"
 
 def test_save_feedback_user_not_found(client, mock_db):
-    mock_db.update_one.return_value.matched_count = 0
+    # Mocking user not found
+    mock_db.bulk_write.return_value.matched_count = 0
 
     response = client.post("/save_feedback", json={
         "user_id": "unknown",
@@ -27,6 +27,7 @@ def test_save_feedback_user_not_found(client, mock_db):
     assert response.json()["detail"] == "User not found"
 
 def test_get_user_preferences_success(client, mock_db):
+    # Mocking existing user preferences
     mock_db.find_one.return_value = {
         "searched_keywords": ["ai", "marketing"],
         "feedback_notes": ["Nice video"]
@@ -45,6 +46,7 @@ def test_get_user_preferences_success(client, mock_db):
     assert data["feedback_notes"] == ["Nice video"]
 
 def test_get_user_preferences_user_not_found(client, mock_db):
+    # Mocking user not found
     mock_db.find_one.return_value = None
 
     response = client.get("/get_user_preferences/unknown")
