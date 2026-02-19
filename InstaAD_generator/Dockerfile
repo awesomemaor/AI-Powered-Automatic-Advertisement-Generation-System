@@ -8,8 +8,8 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # 4. Install dependencies
-COPY backend_requirements.txt .
-RUN pip install --no-cache-dir -r backend_requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # 5. Copy the entire project into the container
 # This copies 'server.py' and the 'Frontend' folder (which contains 'Backend')

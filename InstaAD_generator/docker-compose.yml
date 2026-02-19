@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # The Backend Service
   instaad-backend:
-    build: .
+    build: . # Builds the project from the Dockerfile in the current directory
     container_name: instaad-server
     ports:
       - "8000:8000"

@@ -284,7 +284,7 @@ class GenerateScreen(QWidget):
                     task_id=task_id,
                     keywords=data.get("keywords", []),
                     username=self.username,
-                    go_back_callback=self.return_from_preview
+                    go_back_callback=self.return_from_preview # passing a callback to return to this screen when closing the preview
                 )
                 self.hide()
                 self.preview_window.show()

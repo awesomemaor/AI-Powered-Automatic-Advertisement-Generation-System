@@ -35,13 +35,13 @@ app.include_router(video_status_router)
 app.include_router(save_ad_router)
 
 def start_local_fastapi():
-    """Runs a local server if Docker is not detected."""
+    # Runs a local server if Docker is not detected
     print("Docker not detected. Starting local server...")
     # Passed the app object directly instead of a string string for safety here
     uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
 
 def check_if_server_is_running():
-    """Checks if port 8000 is already in use (e.g., by Docker)."""
+    # Checks if port 8000 is already in use (by Docker or another instance)
     try:
         # Sends a quick ping request to the server root
         response = requests.get("http://127.0.0.1:8000/", timeout=1)
@@ -78,7 +78,6 @@ class MainApp(QStackedWidget):
 if __name__ == "__main__":
     app_qt = QApplication(sys.argv)
 
-    # --- The New Server Check ---
     # If the server is not running (Docker is down), start a local server in a separate thread
     if not check_if_server_is_running():
         fastapi_thread = threading.Thread(target=start_local_fastapi, daemon=True)

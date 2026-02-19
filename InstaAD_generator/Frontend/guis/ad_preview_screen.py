@@ -333,7 +333,7 @@ class AdPreviewScreen(QWidget):
         if self.vlc_player.is_playing():
             self.vlc_player.stop()
 
-        # 3. Trigger the callback to restore the previous screen (prevents blank app state)
+        # 3. Trigger the callback to restore the previous screen (generate_screen) (prevents blank app state)
         if self.go_back_callback:
             self.go_back_callback()
 

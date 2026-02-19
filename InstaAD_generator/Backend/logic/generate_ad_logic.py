@@ -206,7 +206,7 @@ def handle_generate(prompt: str | None, user_id: str, mode="manual"):
     task_id = create_seedance_video_task(final_prompt)
 
     # returns to generate_screen then sends the taskid to Ad_preview_screen and from there to the 
-    # הסבר בשבילנו)המשך )- video_status backend get the response of the video url and show it
+    # video_status backend get the response of the video url and shows it
     return {
         "success": True,
         "message": "Video generation started",
