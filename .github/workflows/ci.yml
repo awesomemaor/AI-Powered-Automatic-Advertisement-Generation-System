@@ -9,7 +9,14 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-22.04 # <--- שינינו את זה מ-latest ל-22.04
+    runs-on: ubuntu-22.04
+
+    # --- הנה התוספת החדשה ---
+    # זה אומר ל-GitHub: "מעכשיו, תריץ את כל פקודות הטרמינל בתוך התיקייה הזו"
+    defaults:
+      run:
+        working-directory: ./InstaAD_generator 
+    # ------------------------
 
     steps:
     # 1. Download the code to the GitHub server
@@ -24,9 +31,11 @@ jobs:
 
     # 3. Install virtual display (xvfb) for PyQt5 GUI tests
     - name: Install system dependencies for PyQt5
+      # שים לב שאת הפקודות של המערכת (apt-get) אנחנו מריצים רגיל, כי הן לא תלויות בתיקייה
+      working-directory: . 
       run: |
         sudo apt-get update
-        sudo apt-get install -y xvfb libegl1 libgl1-mesa-glx libxcb-xinerama0 libxkbcommon-x11-0 # <--- עדכנו את רשימת החבילות
+        sudo apt-get install -y xvfb libegl1 libgl1-mesa-glx libxcb-xinerama0 libxkbcommon-x11-0 
 
     # Step 4: Install all the Python libraries your project needs to run.
     - name: Install Python dependencies
