@@ -182,7 +182,7 @@ class UserHomeScreen(QWidget):
         main_layout.addWidget(self.card)
 
         # Loading overlay
-        self.loading_overlay = QLabel("✨ Creating your ad...")
+        self.loading_overlay = QLabel("✨ Creating recommended ad for you...")
         self.loading_overlay.setAlignment(Qt.AlignCenter)
         self.loading_overlay.setStyleSheet("""
             background: rgba(0, 0, 0, 0.6);
@@ -199,6 +199,8 @@ class UserHomeScreen(QWidget):
 
     # recommended ad creation flow
     def generate_recommended(self):
+        # showing the loading overlay
+        self.loading_overlay.setText("✨ Creating recommended ad for you...")
         self.loading_overlay.show()
 
         self.gen_thread = GenerateThread(
