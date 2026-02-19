@@ -9,27 +9,24 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest              # Tells GitHub to spin up a fresh Linux virtual machine.
+    runs-on: ubuntu-22.04 # <--- שינינו את זה מ-latest ל-22.04
 
     steps:
-    # Step 1: Clone the repository into the virtual machine's workspace.
-    # This automatically sets the working directory to your project root (InstaAD_generator).
+    # 1. Download the code to the GitHub server
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # Step 2: Install Python 3.10 on the virtual machine.
+    # 2. Set up Python environment
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.10" 
+        python-version: "3.10"
 
-    # Step 3: Install a virtual display.
-    # Since GitHub's servers don't have physical monitors, PyQt5 will crash without this.
-    # 'xvfb' creates a fake, invisible screen for the GUI to render on during tests.
+    # 3. Install virtual display (xvfb) for PyQt5 GUI tests
     - name: Install system dependencies for PyQt5
       run: |
         sudo apt-get update
-        sudo apt-get install -y xvfb libegl1-mesa
+        sudo apt-get install -y xvfb libegl1 libgl1-mesa-glx libxcb-xinerama0 libxkbcommon-x11-0 # <--- עדכנו את רשימת החבילות
 
     # Step 4: Install all the Python libraries your project needs to run.
     - name: Install Python dependencies
