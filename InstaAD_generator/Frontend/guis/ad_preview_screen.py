@@ -259,7 +259,7 @@ class AdPreviewScreen(QWidget):
         self.current_video_url = url
         self.status_label.setText("✅ Masterpiece Ready!")
 
-        # video local download
+        # get the video content and save it to a temporary file, then load it into the VLC player
         r = requests.get(url, stream=True)
         temp_path = os.path.join(tempfile.gettempdir(), f"{self.task_id}.mp4")
         with open(temp_path, "wb") as f:

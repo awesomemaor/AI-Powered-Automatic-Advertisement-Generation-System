@@ -1,9 +1,16 @@
 import sys
 import os
+import io
 import threading
 import uvicorn
 import requests  # Required for the connection check
 import time
+
+# Ensure stdout and stderr are available for FastAPI logs, even in environments where they might be None
+if sys.stdout is None:
+    sys.stdout = io.StringIO()
+if sys.stderr is None:
+    sys.stderr = io.StringIO()
 
 # Define paths (as previously configured)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

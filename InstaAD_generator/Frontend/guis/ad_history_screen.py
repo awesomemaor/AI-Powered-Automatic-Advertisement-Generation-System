@@ -124,6 +124,7 @@ class AdHistoryScreen(QWidget):
         
         self.main_layout.addWidget(self.scroll)
 
+    # loads all the ads by using the handle_get_ad function and creates a card for each ad
     def load_ads(self, username: str):
         self.username = username
         while self.grid.count():
@@ -149,6 +150,7 @@ class AdHistoryScreen(QWidget):
         except Exception:
             return date_str
 
+    # creating the card for each ad with the options to play, download and delete the ad.
     def create_ad_card(self, ad: dict):
         card = QFrame()
         card.setFixedHeight(400) 
@@ -289,6 +291,7 @@ class AdHistoryScreen(QWidget):
 
         card.layout.addLayout(btns_layout)
 
+    # building the video player inside the card when the user clicks on the play button
     def _build_card_video(self, card):
         self._clear_layout(card.layout)
 
