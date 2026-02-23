@@ -14,7 +14,7 @@ Creating high-quality video ads is typically a time-consuming process that requi
 - ⚙️ **Customization:** Tailored ad recommendations and keyword tracking for targeted campaigns.
 
 ## 🏗 Architecture & Workflow
-We built InstaAD on a modern, decoupled Client-Server architecture, utilizing containerization and continuous integration for deployment.
+We built InstaAD on a modern, decoupled Client-Server architecture, utilizing containerization and continuous integration for deployment.<br>
 <img width="600" alt="InstaAD Architecture" src="https://github.com/user-attachments/assets/9c2032ab-b133-4307-9ac8-f7a361ab3373" />
 
 
