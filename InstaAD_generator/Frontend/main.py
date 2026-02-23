@@ -101,7 +101,16 @@ if __name__ == "__main__":
             app_qt.setStyleSheet(file.read())
 
     window = MainApp()
-    window.setGeometry(400, 400, 800, 400)
+    
+    # 1. Set initial window size (matching the welcome screen)
+    window.resize(1200, 800)
+    
+    # 2. Calculate screen center and position the window
+    qtRectangle = window.frameGeometry() # Get the virtual geometry of the window
+    centerPoint = app_qt.primaryScreen().availableGeometry().center() # Find the exact center point of the user's screen
+    qtRectangle.moveCenter(centerPoint) # Move the virtual rectangle to the center
+    window.move(qtRectangle.topLeft()) # Move the actual window to those coordinates
+
     window.setWindowTitle("InstaAD")
     window.show()
 

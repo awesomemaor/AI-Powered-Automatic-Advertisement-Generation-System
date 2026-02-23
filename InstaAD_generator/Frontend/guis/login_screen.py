@@ -194,6 +194,7 @@ class LoginScreen(QWidget):
             color: white;
             font-size: 18px;
             border-radius: 20px;
+            margin: 0px;
         """)
         self.loading_overlay.hide()
         self.loading_overlay.raise_()

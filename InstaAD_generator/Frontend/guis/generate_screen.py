@@ -230,6 +230,7 @@ class GenerateScreen(QWidget):
             color: white;
             font-size: 20px;
             border-radius: 20px;
+            margin: 0px;
         """)
         self.loading_overlay.setParent(self) # making it above the entire screen
         self.loading_overlay.hide()          # hide initially 

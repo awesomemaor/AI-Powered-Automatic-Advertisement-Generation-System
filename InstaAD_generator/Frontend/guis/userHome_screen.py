@@ -189,6 +189,7 @@ class UserHomeScreen(QWidget):
             color: white;
             font-size: 20px;
             border-radius: 20px;
+            margin: 0px;
         """)
         self.loading_overlay.setParent(self)
         self.loading_overlay.hide()
