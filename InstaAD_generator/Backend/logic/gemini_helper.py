@@ -29,9 +29,9 @@ def enhance_prompt_with_gemini(user_input: str):
         4. Output ONLY the enhanced prompt.
         
         INSTRUCTIONS FOR USING USER HISTORY:
-        1. Act as a smart filter. ONLY incorporate past keywords that logically align with or enhance the current user input's core idea. Ignore unrelated topics.
-        2. Apply the user's past feedback as stylistic or structural guidelines ONLY if they make sense for the current request.
-        3. The current user input is your absolute priority; use history strictly for relevant personalization. Do not force irrelevant history.
+        1. **Strict Subject Authority:** The current user input ALONE defines the main subject, action, and central object of the scene. Never let history override or clutter this.
+        2. **Semantic Logic Filter:** Before merging a keyword from history, perform a logic check. Only include historical context (like location or props) if it physically and logically makes sense with the current subject. If there is any semantic clash, discard the historical keyword immediately.
+        3. **Style vs. Content Separation:** Aggressively apply historical *visual styles* (lighting, colors, camera angles) to maintain consistency, but be extremely conservative with historical *nouns/objects*. Only keep historical objects if they are naturally complementary to the current request.
         """
         
         # Call Gemini model to enhance the prompt

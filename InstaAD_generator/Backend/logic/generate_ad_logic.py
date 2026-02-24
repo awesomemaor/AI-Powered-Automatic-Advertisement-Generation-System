@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-USE_MOCK = True  # for debug purposes to not wast KIE tokens
+USE_MOCK = False # for debug purposes to not wast KIE tokens
 KIE_API_KEY = os.getenv("KIE_API_KEY")  
 KIE_CREATE_TASK_URL = "https://api.kie.ai/api/v1/jobs/createTask"
 
@@ -23,14 +23,21 @@ def extract_keywords(prompt: str):
     words = text.split()
 
     stop_words = {
-        # Common grammar
-        "the", "and", "is", "in", "on", "at", "to", "for", "a", "an", "of", 
-        "with", "this", "that", "it", "by", "as", "from", "or", "be", "are", "will",
-        # Request words 
-        "create", "generate", "make", "produce", "show", "me", "please", 
-        "video", "advertisement", "ad", "promo", "promotion", "clip", "movie", "film",
-        # Adjectives that are too generic 
-        "short", "long", "engaging", "professional", "beautiful", "best", "cool", "hd", "4k"
+        # --- Top Frequency Grammar (The "Glue" words) ---
+        "the", "a", "an", "and", "is", "are", "in", "on", "at", "to", "for", "of", "with", "by", 
+        "it", "this", "that", "my", "your", "me", "us", "we", "they", "them",
+
+        # --- Action & Request Words (The "Command" words) ---
+        "create", "make", "generate", "produce", "show", "give", "want", "need", "featuring",
+        "please", "help", "thanks", "render", "design",
+
+        # --- The Output Itself (Redundant context) ---
+        "video", "ad", "advertisement", "promo", "clip", "movie", "film", "image", "shot",
+        "scene", "footage", "background", "style", "vibe",
+
+        # --- Quality & Generic Fluff (Non-content adjectives) ---
+        "cool", "best", "good", "nice", "beautiful", "amazing", "professional", 
+        "cinematic", "realistic", "photorealistic", "hd", "4k", "8k", "high", "quality"
     }
 
     seen = set()
@@ -155,12 +162,14 @@ def handle_generate(prompt: str | None, user_id: str, mode="manual"):
         if not prompt or len(prompt) < 5:
             return {"success": False, "message": "Prompt is too short"}
         base_prompt = prompt
+        print("Using user prompt as base:", base_prompt)
 
     else:  # recommended
         base_prompt = (
             "Create a short, engaging, professional video advertisement "
             "suitable for social media platforms."
         )
+        print("Using default base prompt for recommended mode:", base_prompt)
 
     # -------------------------
     # 2. enrich with user data
@@ -168,22 +177,25 @@ def handle_generate(prompt: str | None, user_id: str, mode="manual"):
     if mode == "recommended":
         if searched_keywords:
             base_prompt += (
-                "\nFocus on themes and concepts related to: "
+                "\nOptional Context / Stylistic Vibe (Use ONLY if relevant to current subject): "
                 + ", ".join(searched_keywords[-5:])
             )
+            print("Enriched prompt with searched keywords:", searched_keywords[-5:])
 
         if feedback_notes:
             base_prompt += (
-                "\nUser preferences and feedback to consider: "
+                "\nGeneral Visual Preferences (Apply as style guide; apply specific details ONLY if logically relevant to current subject): "
                 + " ".join(feedback_notes[-3:])
             )
+            print("Enriched prompt with feedback notes:", feedback_notes[-3:])
 
     elif mode == "manual":
         if feedback_notes:
             base_prompt += (
-                "\nUser preferences and feedback to consider: "
+                "\nGeneral Visual Preferences (Apply as style guide; apply specific details ONLY if logically relevant to current subject): "
                 + " ".join(feedback_notes[-3:])
             )
+            print("Enriched prompt with feedback notes:", feedback_notes[-3:])
 
     # -------------------------
     # 3. Gemini enhancement
