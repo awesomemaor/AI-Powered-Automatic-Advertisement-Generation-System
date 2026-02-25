@@ -164,7 +164,7 @@ class UserHomeScreen(QWidget):
         self.logout_button.clicked.connect(self.logout_clicked)
         self.logout_button.setStyleSheet("""
             QPushButton {
-                color: #e74c3c; background: transparent; font-size: 14px; 
+                color: #a0aec0; background: transparent; font-size: 14px; 
                 font-weight: bold; border: none; margin-top: 10px;
             }
             QPushButton:hover { color: #ff5e57; text-decoration: underline; }

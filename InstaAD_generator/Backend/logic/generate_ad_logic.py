@@ -126,7 +126,7 @@ def create_seedance_video_task(prompt: str):
             "prompt": prompt,
             "aspect_ratio": "16:9",
             "resolution": "480p",
-            "duration": "4"
+            "duration": "4",
         }
     }
 

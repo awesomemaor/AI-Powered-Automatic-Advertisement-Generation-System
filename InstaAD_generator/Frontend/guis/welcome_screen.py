@@ -297,7 +297,7 @@ class WelcomeScreen(QWidget):
         help_layout.setContentsMargins(0, 20, 30, 0) # מרווחים מהקצוות: 20 מלמעלה, 30 מימין
         help_layout.addStretch() # דוחף את הכפתור ימינה
 
-        self.help_btn = QPushButton("❓ Help / Guide")
+        self.help_btn = QPushButton("? Help / Guide")
         self.help_btn.setCursor(Qt.PointingHandCursor)
         self.help_btn.clicked.connect(self.show_help)
         self.help_btn.setFixedSize(155, 42)
