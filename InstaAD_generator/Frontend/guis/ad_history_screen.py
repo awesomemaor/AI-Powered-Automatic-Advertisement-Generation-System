@@ -74,10 +74,22 @@ class AdHistoryScreen(QWidget):
         self.main_layout.setContentsMargins(40, 40, 40, 40)
         self.main_layout.setSpacing(25)
 
-        # Header - תוקן החיתוך של כפתור ה-Back
-        header_layout = QHBoxLayout()
+        # ========== Header מוגבה ומקובע כדי שהגלילה תיכנס מתחתיו בצורה חלקה ==========
+        self.header_frame = QFrame()
+        self.header_frame.setFixedHeight(90)
+        self.header_frame.setStyleSheet("""
+            QFrame {
+                background-color: rgba(20, 20, 35, 0.95); /* צבע כמעט אטום לגמרי */
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 20px;
+            }
+        """)
+        
+        header_layout = QHBoxLayout(self.header_frame)
+        header_layout.setContentsMargins(30, 0, 30, 0)
+        
         back_btn = QPushButton("← Back")
-        back_btn.setFixedHeight(40) # רק גובה קבוע, הרוחב חופשי לפי הטקסט
+        back_btn.setFixedHeight(40) 
         back_btn.setCursor(Qt.PointingHandCursor)
         back_btn.setStyleSheet("""
             QPushButton {
@@ -86,7 +98,7 @@ class AdHistoryScreen(QWidget):
                 border: 1px solid rgba(255, 255, 255, 0.2);
                 border-radius: 12px;
                 font-weight: bold;
-                padding: 0px 20px; /* מוסיף ריווח אסתטי מהצדדים */
+                padding: 0px 20px; 
             }
             QPushButton:hover { background: rgba(255, 255, 255, 0.2); }
         """)
@@ -102,7 +114,15 @@ class AdHistoryScreen(QWidget):
         
         header_layout.addStretch() 
 
-        self.main_layout.addLayout(header_layout)
+        # הוספת צל חזק שייתן אפקט של חיתוך טבעי כשהסרטון עובר מתחת
+        header_shadow = QGraphicsDropShadowEffect()
+        header_shadow.setBlurRadius(30)
+        header_shadow.setColor(QColor(0, 0, 0, 220))
+        header_shadow.setOffset(0, 8)
+        self.header_frame.setGraphicsEffect(header_shadow)
+
+        self.main_layout.addWidget(self.header_frame)
+        # =========================================================================
 
         # Scroll Area
         self.scroll = QScrollArea()
@@ -119,9 +139,14 @@ class AdHistoryScreen(QWidget):
         self.grid = QGridLayout()
         self.grid.setSpacing(30)
         self.grid.setAlignment(Qt.AlignTop) 
-        self.container.setLayout(self.grid)
-        self.scroll.setWidget(self.container)
         
+        self.grid.setColumnStretch(0, 1)
+        self.grid.setColumnStretch(1, 1)
+        
+        self.container.setLayout(self.grid)
+        self.container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        
+        self.scroll.setWidget(self.container)
         self.main_layout.addWidget(self.scroll)
 
     # loads all the ads by using the handle_get_ad function and creates a card for each ad
@@ -290,6 +315,8 @@ class AdHistoryScreen(QWidget):
         btns_layout.addWidget(download_btn)
 
         card.layout.addLayout(btns_layout)
+        
+        card.update() # מעדכן את הציור של הכרטיס למניעת קפיצות
 
     # building the video player inside the card when the user clicks on the play button
     def _build_card_video(self, card):
@@ -356,6 +383,8 @@ class AdHistoryScreen(QWidget):
         elif sys.platform == "darwin": card.vlc_player.set_nsobject(win_id)
         
         card.vlc_player.play()
+        
+        card.update() # מעדכן את הציור של הכרטיס למניעת קפיצות
 
     def _on_view_clicked(self, card):
         if not card.is_playing:

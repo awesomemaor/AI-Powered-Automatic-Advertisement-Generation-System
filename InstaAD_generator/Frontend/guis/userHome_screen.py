@@ -85,14 +85,11 @@ class UserHomeScreen(QWidget):
         self.setWindowTitle("InstaAD | Dashboard")
         self.setMinimumSize(1200, 800)
 
-        # Layout ראשי שממרכז את הכרטיס
         main_layout = QVBoxLayout(self)
         main_layout.setAlignment(Qt.AlignCenter)
 
-        # כרטיס הזכוכית שאהבת
         self.card = QFrame()
         self.card.setFixedWidth(650)
-        # שים לב: הורדתי setFixedHeight כדי שהכרטיס יגדל אם צריך והטקסט לא ייחתך
         self.card.setStyleSheet("""
             QFrame {
                 background-color: rgba(255, 255, 255, 0.07);
@@ -105,10 +102,8 @@ class UserHomeScreen(QWidget):
         card_layout.setContentsMargins(50, 50, 50, 50)
         card_layout.setSpacing(20)
 
-        # --- המרכוז הפנימי שמונע חיתוך ---
         card_layout.addStretch() 
 
-        # כותרת
         self.welcome_label = QLabel(f"Welcome, {self.username}!")
         self.welcome_label.setFont(QFont("Segoe UI", 32, QFont.Bold))
         self.welcome_label.setStyleSheet("color: white; background: transparent; border: none;")
@@ -167,7 +162,7 @@ class UserHomeScreen(QWidget):
                 color: #a0aec0; background: transparent; font-size: 14px; 
                 font-weight: bold; border: none; margin-top: 10px;
             }
-            QPushButton:hover { color: #ff5e57; text-decoration: underline; }
+            QPushButton:hover { color: #00f2fe; text-decoration: underline; }
         """)
         card_layout.addWidget(self.logout_button, alignment=Qt.AlignCenter)
 

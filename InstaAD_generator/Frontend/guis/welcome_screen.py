@@ -103,9 +103,7 @@ class HelpWindow(QDialog):
 
         # הוספת הודעת תודה בסוף
         add_section("💙 Thank You!", 
-                    "Thank you for choosing InstaAD! We're committed to revolutionizing your marketing workflow with cutting-edge AI technology. "
-                    "Your creativity drives us forward. If you have any feedback or suggestions, we'd love to hear from you. "
-                    "Happy creating! 🚀")
+                    "Thank you for choosing InstaAD! Developed by Maor Siboni and Daniel Ayash, our platform is committed to revolutionizing your marketing workflow with cutting-edge AI technology. Your creativity is what drives our continued innovation. If you have any feedback or suggestions, we would love to hear from you. Happy creating! 🚀")
 
         content_layout.addStretch()
         scroll.setWidget(content_widget)
@@ -319,7 +317,6 @@ class WelcomeScreen(QWidget):
         """)
         help_layout.addWidget(self.help_btn)
 
-        # הוספת כפתור העזרה לגריד, באותו מקום (0,0) אבל עם יישור למעלה
         grid_layout.addWidget(help_container, 0, 0, Qt.AlignTop)
 
     def go_to_Login(self):
