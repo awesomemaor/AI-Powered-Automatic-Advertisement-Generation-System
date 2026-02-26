@@ -127,6 +127,7 @@ class AdHistoryScreen(QWidget):
         # Scroll Area
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scroll.setStyleSheet("""
             QScrollArea { border: none; background: transparent; }
             QScrollBar:vertical { background: rgba(255, 255, 255, 0.05); width: 10px; border-radius: 5px; }
@@ -178,7 +179,8 @@ class AdHistoryScreen(QWidget):
     # creating the card for each ad with the options to play, download and delete the ad.
     def create_ad_card(self, ad: dict):
         card = QFrame()
-        card.setFixedHeight(400) 
+        card.setFixedHeight(400)  
+        card.setMinimumWidth(450)
         card.setStyleSheet("""
             QFrame {
                 background-color: rgba(30, 30, 40, 0.7);
