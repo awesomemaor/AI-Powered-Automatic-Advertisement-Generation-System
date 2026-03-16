@@ -66,7 +66,7 @@ pip install -r requirements.txt
 3. Run the application (You can also run this directly from your IDE through main.py file):
 
 ```bash
-python main.py
+python Frontend/main.py
 ```
 
 *(Note: The system will detect that Docker is not running and will automatically spin up a local FastAPI server in the background before launching the GUI).*
@@ -90,7 +90,7 @@ docker compose up -d
 4. Once the Docker containers are successfully running in the background, launch the PyQt5 Desktop application (Frontend) from your terminal:
 
 ```bash
-python main.py
+python Frontend/main.py
 ```
 
 ---
