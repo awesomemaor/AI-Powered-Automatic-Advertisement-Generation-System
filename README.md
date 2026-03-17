@@ -5,6 +5,11 @@ Creating high-quality video ads is typically a time-consuming process that requi
 
 **InstaAD** solves this by using advanced AI to **automatically generate personalized video advertisements**. Our platform streamlines the entire marketing workflow, significantly reduces manual effort, and allows users to quickly produce stunning, tailored video content for different target audiences in a matter of seconds.
 
+### 🎥 Watch InstaAD in Action
+Check out our complete system run and demonstration:
+
+[![InstaAD Demo Video](https://img.youtube.com/vi/fhLPWFYolC0/maxresdefault.jpg)](https://www.youtube.com/watch?v=fhLPWFYolC0)
+
 ## ✨ Features
 - 👤 **User Management:** Secure registration and personal account dashboard.
 - 🎥 **Text-to-Video Generation:** Create full video ads simply from text prompts.
