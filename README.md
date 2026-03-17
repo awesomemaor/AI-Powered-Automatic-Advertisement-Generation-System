@@ -8,7 +8,7 @@ Creating high-quality video ads is typically a time-consuming process that requi
 ### 🎥 Watch InstaAD in Action
 Check out our complete system run and demonstration:
 
-[![InstaAD Demo Video](https://img.youtube.com/vi/fhLPWFYolC0/maxresdefault.jpg)](https://www.youtube.com/watch?v=fhLPWFYolC0)
+[![InstaAD Demo Video](https://img.youtube.com/vi/fhLPWFYolC0/mqdefault.jpg)](https://www.youtube.com/watch?v=fhLPWFYolC0)
 
 ## ✨ Features
 - 👤 **User Management:** Secure registration and personal account dashboard.
